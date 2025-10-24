@@ -1,4 +1,4 @@
-//server.js
+// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -13,25 +13,47 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Import routes
-const authRoutes = require("./routes/authRoutes");
-const propertyRoutes = require("./routes/propertyRoutes");
-const tenantRoutes = require("./routes/tenantRoutes");
+// Import routes safely
+let authRoutes, userRoutes;
+try {
+  authRoutes = require("./routes/authRoutes");
+  console.log(" authRoutes loaded successfully");
+} catch (err) {
+  console.error(" Failed to load authRoutes:", err.message);
+}
 
-// Use routes
-app.use("/api/auth", authRoutes);
-//app.use("/api/properties", propertyRoutes);
-//app.use("/api/tenants", tenantRoutes);
+try {
+  userRoutes = require("./routes/userRoutes");
+  console.log(" userRoutes loaded successfully");
+} catch (err) {
+  console.error(" Failed to load userRoutes:", err.message);
+}
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log(" MongoDB connected"))
-  .catch((err) => console.error(" MongoDB connection error:", err));
+// Attach routes only if they are valid routers
+if (typeof authRoutes === "function" || authRoutes?.stack) {
+  app.use("/api/auth", authRoutes);
+} else {
+  console.warn(" Skipping authRoutes — invalid or not exported correctly");
+}
 
-// Start server
+if (typeof userRoutes === "function" || userRoutes?.stack) {
+  app.use("/api/users", userRoutes);
+} else {
+  console.warn(" Skipping userRoutes — invalid or not exported correctly");
+}
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+// Connect to MongoDB and start server
+(async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log(" MongoDB connected");
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+  } catch (err) {
+    console.error(" MongoDB connection error:", err);
+  }
+})();
