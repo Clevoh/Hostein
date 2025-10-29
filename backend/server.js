@@ -13,47 +13,21 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Import routes safely
-let authRoutes, userRoutes;
-try {
-  authRoutes = require("./routes/authRoutes");
-  console.log(" authRoutes loaded successfully");
-} catch (err) {
-  console.error(" Failed to load authRoutes:", err.message);
-}
+// Import routes
+const userRoutes = require("./routes/userRoutes");
 
-try {
-  userRoutes = require("./routes/userRoutes");
-  console.log(" userRoutes loaded successfully");
-} catch (err) {
-  console.error(" Failed to load userRoutes:", err.message);
-}
-
-// Attach routes only if they are valid routers
-if (typeof authRoutes === "function" || authRoutes?.stack) {
-  app.use("/api/auth", authRoutes);
-} else {
-  console.warn(" Skipping authRoutes — invalid or not exported correctly");
-}
-
-if (typeof userRoutes === "function" || userRoutes?.stack) {
-  app.use("/api/users", userRoutes);
-} else {
-  console.warn(" Skipping userRoutes — invalid or not exported correctly");
-}
+// Use routes
+app.use("/api/users", userRoutes);
 
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB and start server
 (async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(process.env.MONGO_URI);
     console.log(" MongoDB connected");
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   } catch (err) {
-    console.error(" MongoDB connection error:", err);
+    console.error(" MongoDB connection error:", err.message);
   }
 })();
