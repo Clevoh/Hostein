@@ -19,12 +19,14 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const propertyRoutes = require("./routes/propertyRoutes");
 const tenantRoutes = require("./routes/tenantRoutes");
+const unitRoutes = require("./routes/unitRoutes");
 
 //  Use routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/tenants", tenantRoutes);
+app.use("/api/units", unitRoutes);
 
 const PORT = process.env.PORT || 5000;
 
