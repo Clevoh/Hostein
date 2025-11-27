@@ -1,0 +1,9 @@
+.card {
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+}
+
+.read-the-docs {
+  color: #888;
+}
