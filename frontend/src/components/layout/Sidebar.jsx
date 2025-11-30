@@ -2,53 +2,55 @@ import { NavLink } from "react-router-dom";
 
 const Sidebar = () => {
   return (
-    <aside className="w-64 h-screen bg-gray-800 text-white fixed">
-      <div className="p-6 font-bold text-xl border-b border-gray-700">
-        Hostein
-      </div>
-      <nav className="mt-6">
+    <div className="w-64 h-screen bg-white shadow-lg fixed left-0 top-0 p-5 flex flex-col">
+      <h2 className="text-2xl font-bold text-blue-600 mb-10">Hostein</h2>
+
+      <nav className="flex flex-col gap-4">
         <NavLink
-          to="/dashboard"
+          to="/"
           className={({ isActive }) =>
-            `block py-2 px-4 hover:bg-gray-700 rounded ${
-              isActive ? "bg-gray-700" : ""
+            `p-3 rounded-lg font-medium ${
+              isActive ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-gray-200"
             }`
           }
         >
           Dashboard
         </NavLink>
+
         <NavLink
           to="/tenants"
           className={({ isActive }) =>
-            `block py-2 px-4 hover:bg-gray-700 rounded ${
-              isActive ? "bg-gray-700" : ""
+            `p-3 rounded-lg font-medium ${
+              isActive ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-gray-200"
             }`
           }
         >
           Tenants
         </NavLink>
+
         <NavLink
           to="/properties"
           className={({ isActive }) =>
-            `block py-2 px-4 hover:bg-gray-700 rounded ${
-              isActive ? "bg-gray-700" : ""
+            `p-3 rounded-lg font-medium ${
+              isActive ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-gray-200"
             }`
           }
         >
           Properties
         </NavLink>
+
         <NavLink
           to="/units"
           className={({ isActive }) =>
-            `block py-2 px-4 hover:bg-gray-700 rounded ${
-              isActive ? "bg-gray-700" : ""
+            `p-3 rounded-lg font-medium ${
+              isActive ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-gray-200"
             }`
           }
         >
           Units
         </NavLink>
       </nav>
-    </aside>
+    </div>
   );
 };
 

@@ -1,38 +1,17 @@
-import React, { useState } from 'react';
-import './App.css';
+import React from "react";
 import AppRoutes from "./routes";
+import "./tailwind.css";
 
-function App() {
-  const [count, setCount] = useState(0);
-
+export default function App() {
   return (
-    <div className="App">
-      {/* Optional: Keep your test counter */}
-      <div className="p-4">
-        <h1 className="text-2xl font-bold mb-4">Vite + React</h1>
+    <div className="p-10 bg-gray-200 min-h-screen">
+      <h1 className="text-5xl font-bold text-blue-600">
+        Tailwind IS Working!
+      </h1>
 
-        <div className="card mb-6 p-4 bg-white shadow rounded">
-          <button
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            onClick={() => setCount((count) => count + 1)}
-          >
-            count is {count}
-          </button>
-
-          <p className="mt-2 text-gray-600">
-            Edit <code>src/App.jsx</code> and save to test HMR
-          </p>
-        </div>
-
-        <p className="text-gray-500 mb-6">
-          React + Vite project is running successfully.
-        </p>
-      </div>
-
-      {/* Main dashboard and routing */}
-      <AppRoutes />
+      <button className="mt-6 px-6 py-3 bg-green-500 text-white rounded-lg shadow">
+        Test Button
+      </button>
     </div>
   );
 }
-
-export default App;
