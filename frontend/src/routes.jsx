@@ -1,27 +1,24 @@
+// src/routes.jsx
+import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Sidebar from "./components/layout/Sidebar";
-import Header from "./components/layout/Header";
+import MainLayout from "./Layouts/MainLayout";
 
 import DashboardHome from "./pages/dashboard/DashboardHome";
-
-import TenantsPage from "./pages/tenants/TenantsPage";
 import PropertiesPage from "./pages/properties/PropertiesPage";
 import UnitsPage from "./pages/units/UnitsPage";
+import TenantsPage from "./pages/tenants/TenantsPage";
 
-const AppRoutes = () => {
+export default function AppRoutes() {
   return (
     <BrowserRouter>
-      <Sidebar />
-      <Header />
-
-      <Routes>
-        <Route path="/" element={<DashboardHome />} />
-        <Route path="/tenants" element={<TenantsPage />} />
-        <Route path="/properties" element={<PropertiesPage />} />
-        <Route path="/units" element={<UnitsPage />} />
-      </Routes>
+      <MainLayout>
+        <Routes>
+          <Route path="/" element={<DashboardHome />} />
+          <Route path="/properties" element={<PropertiesPage />} />
+          <Route path="/units" element={<UnitsPage />} />
+          <Route path="/tenants" element={<TenantsPage />} />
+        </Routes>
+      </MainLayout>
     </BrowserRouter>
   );
-};
-
-export default AppRoutes;
+}

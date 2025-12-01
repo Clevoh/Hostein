@@ -1,57 +1,35 @@
+// src/components/layout/Sidebar.jsx
+import React from "react";
 import { NavLink } from "react-router-dom";
 
-const Sidebar = () => {
+const LinkItem = ({ to, children }) => (
+  <NavLink
+    to={to}
+    className={({ isActive }) =>
+      `block px-4 py-3 rounded-lg font-medium transition-colors ${
+        isActive ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-200"
+      }`
+    }
+  >
+    {children}
+  </NavLink>
+);
+
+export default function Sidebar() {
   return (
-    <div className="w-64 h-screen bg-white shadow-lg fixed left-0 top-0 p-5 flex flex-col">
-      <h2 className="text-2xl font-bold text-blue-600 mb-10">Hostein</h2>
+    <aside className="w-64 h-screen bg-white shadow fixed left-0 top-0 p-6">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-blue-600">Hostein</h1>
+        <p className="text-sm text-gray-500">Property management</p>
+      </div>
 
-      <nav className="flex flex-col gap-4">
-        <NavLink
-          to="/"
-          className={({ isActive }) =>
-            `p-3 rounded-lg font-medium ${
-              isActive ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-gray-200"
-            }`
-          }
-        >
-          Dashboard
-        </NavLink>
-
-        <NavLink
-          to="/tenants"
-          className={({ isActive }) =>
-            `p-3 rounded-lg font-medium ${
-              isActive ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-gray-200"
-            }`
-          }
-        >
-          Tenants
-        </NavLink>
-
-        <NavLink
-          to="/properties"
-          className={({ isActive }) =>
-            `p-3 rounded-lg font-medium ${
-              isActive ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-gray-200"
-            }`
-          }
-        >
-          Properties
-        </NavLink>
-
-        <NavLink
-          to="/units"
-          className={({ isActive }) =>
-            `p-3 rounded-lg font-medium ${
-              isActive ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-gray-200"
-            }`
-          }
-        >
-          Units
-        </NavLink>
+      <nav className="flex flex-col gap-2">
+        <LinkItem to="/">Dashboard</LinkItem>
+        <LinkItem to="/properties">Properties</LinkItem>
+        <LinkItem to="/units">Units</LinkItem>
+        <LinkItem to="/tenants">Tenants</LinkItem>
+        <LinkItem to="/payments">Payments</LinkItem>
       </nav>
-    </div>
+    </aside>
   );
-};
-
-export default Sidebar;
+}
