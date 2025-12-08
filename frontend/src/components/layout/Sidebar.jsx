@@ -1,55 +1,35 @@
+// src/components/layout/Sidebar.jsx
+import React from "react";
 import { NavLink } from "react-router-dom";
 
-const Sidebar = () => {
+const LinkItem = ({ to, children }) => (
+  <NavLink
+    to={to}
+    className={({ isActive }) =>
+      `block px-4 py-3 rounded-lg font-medium transition-colors ${
+        isActive ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-200"
+      }`
+    }
+  >
+    {children}
+  </NavLink>
+);
+
+export default function Sidebar() {
   return (
-    <aside className="w-64 h-screen bg-gray-800 text-white fixed">
-      <div className="p-6 font-bold text-xl border-b border-gray-700">
-        Hostein
+    <aside className="w-64 h-screen bg-white shadow fixed left-0 top-0 p-6">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-blue-600">Hostein</h1>
+        <p className="text-sm text-gray-500">Property management</p>
       </div>
-      <nav className="mt-6">
-        <NavLink
-          to="/dashboard"
-          className={({ isActive }) =>
-            `block py-2 px-4 hover:bg-gray-700 rounded ${
-              isActive ? "bg-gray-700" : ""
-            }`
-          }
-        >
-          Dashboard
-        </NavLink>
-        <NavLink
-          to="/tenants"
-          className={({ isActive }) =>
-            `block py-2 px-4 hover:bg-gray-700 rounded ${
-              isActive ? "bg-gray-700" : ""
-            }`
-          }
-        >
-          Tenants
-        </NavLink>
-        <NavLink
-          to="/properties"
-          className={({ isActive }) =>
-            `block py-2 px-4 hover:bg-gray-700 rounded ${
-              isActive ? "bg-gray-700" : ""
-            }`
-          }
-        >
-          Properties
-        </NavLink>
-        <NavLink
-          to="/units"
-          className={({ isActive }) =>
-            `block py-2 px-4 hover:bg-gray-700 rounded ${
-              isActive ? "bg-gray-700" : ""
-            }`
-          }
-        >
-          Units
-        </NavLink>
+
+      <nav className="flex flex-col gap-2">
+        <LinkItem to="/">Dashboard</LinkItem>
+        <LinkItem to="/properties">Properties</LinkItem>
+        <LinkItem to="/units">Units</LinkItem>
+        <LinkItem to="/tenants">Tenants</LinkItem>
+        <LinkItem to="/payments">Payments</LinkItem>
       </nav>
     </aside>
   );
-};
-
-export default Sidebar;
+}
