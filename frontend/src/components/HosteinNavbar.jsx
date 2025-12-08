@@ -1,22 +1,85 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { FaGlobe, FaBars } from "react-icons/fa";
 
 export default function HosteinNavbar() {
+  const [openHomes, setOpenHomes] = useState(false);
+  const [openServices, setOpenServices] = useState(false);
+
+  const homesRef = useRef(null);
+  const servicesRef = useRef(null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    function closeMenus(e) {
+      if (homesRef.current && !homesRef.current.contains(e.target)) {
+        setOpenHomes(false);
+      }
+      if (servicesRef.current && !servicesRef.current.contains(e.target)) {
+        setOpenServices(false);
+      }
+    }
+
+    document.addEventListener("mousedown", closeMenus);
+    return () => document.removeEventListener("mousedown", closeMenus);
+  }, []);
+
   return (
     <nav className="w-full flex items-center justify-between px-10 py-4 shadow-md bg-white fixed top-0 left-0 z-50">
 
       {/* LOGO */}
-      <div className="flex items-center space-x-2 cursor-pointer">
+      <Link to="/" className="flex items-center space-x-2 cursor-pointer">
         <span className="text-red-500 text-3xl font-extrabold">H</span>
         <span className="text-xl font-semibold text-gray-800">Hostein</span>
-      </div>
+      </Link>
 
       {/* CENTER NAV */}
       <div className="hidden md:flex items-center space-x-10 text-gray-700 font-medium">
-        <span className="hover:text-black cursor-pointer">Homes</span>
-        <span className="hover:text-black cursor-pointer">Experiences</span>
-        <span className="hover:text-black cursor-pointer">Services</span>
+
+        {/* Homes Dropdown */}
+        <div className="relative" ref={homesRef}>
+          <button
+            onClick={() => {
+              setOpenHomes((s) => !s);
+              setOpenServices(false);
+            }}
+            className="hover:text-black"
+          >
+            Homes
+          </button>
+
+          {openHomes && (
+            <div className="absolute top-full left-0 mt-2 w-40 bg-white shadow-lg border rounded-lg p-2 z-50">
+              <Link to="/rentals" className="block px-4 py-2 hover:bg-gray-100">Rentals</Link>
+              <Link to="/apartments" className="block px-4 py-2 hover:bg-gray-100">Apartments</Link>
+              <Link to="/single-rooms" className="block px-4 py-2 hover:bg-gray-100">Single Rooms</Link>
+              <Link to="/hotel-rooms" className="block px-4 py-2 hover:bg-gray-100">Hotel Rooms</Link>
+            </div>
+          )}
+        </div>
+
+        {/* Services Dropdown */}
+        <div className="relative" ref={servicesRef}>
+          <button
+            onClick={() => {
+              setOpenServices((s) => !s);
+              setOpenHomes(false);
+            }}
+            className="hover:text-black"
+          >
+            Services
+          </button>
+
+          {openServices && (
+            <div className="absolute top-full left-0 mt-2 w-44 bg-white shadow-lg border rounded-lg p-2 z-50">
+              <Link to="/meals" className="block px-4 py-2 hover:bg-gray-100">Meals</Link>
+              <Link to="/translator" className="block px-4 py-2 hover:bg-gray-100">Translator</Link>
+              <Link to="/tour-guide" className="block px-4 py-2 hover:bg-gray-100">Tour Guide</Link>
+              <Link to="/trainer" className="block px-4 py-2 hover:bg-gray-100">Trainer</Link>
+              <Link to="/massage" className="block px-4 py-2 hover:bg-gray-100">Massage</Link>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* RIGHT NAV */}
