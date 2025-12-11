@@ -1,4 +1,4 @@
-const DashboardHome = () => {
+const HostDashboardHome = () => {
   return (
     <div className="ml-64 mt-16 p-8">
 
@@ -69,4 +69,4 @@ const DashboardHome = () => {
   );
 };
 
-export default DashboardHome;
+export default HostDashboardHome;

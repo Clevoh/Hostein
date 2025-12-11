@@ -1,10 +1,27 @@
-// src/pages/Landing.jsx
 import React from "react";
 import { Link } from "react-router-dom";
 import HosteinSearchBarAdvanced from "../components/HosteinSearchBarAdvanced";
 import HosteinNavbar from "../components/HosteinNavbar";
 
 export default function Landing() {
+  
+  //  CATEGORIES 
+  const categories = [
+    { label: "Rentals", src: "/src/assets/categories/rentals.jpg.jpg" },
+    { label: "Apartments", src: "/src/assets/categories/apartment.jpg.jpg" },
+    { label: "Homes", src: "/src/assets/categories/homes.jpg.jpg" },
+    { label: "Services", src: "/src/assets/categories/services.jpg.jpg" },
+    { label: "Experiences", src: "/src/assets/categories/experience.jpg" },
+  ];
+
+  // POPULAR CITIES 
+  const cities = [
+    { src: "/src/assets/cities/nairobi.jpg.jpg", label: "Homes in Nairobi" },
+    { src: "/src/assets/cities/mombasa.jpg.jpg", label: "Homes in Mombasa" },
+    { src: "/src/assets/cities/kigali.jpg.jpg", label: "Homes in Kigali" },
+    { src: "/src/assets/cities/eldoret.jpg.jpg", label: "Homes in Eldoret" }
+  ];
+
   return (
     <div className="min-h-screen bg-white text-gray-900">
 
@@ -16,12 +33,13 @@ export default function Landing() {
         <HosteinSearchBarAdvanced />
       </div>
 
-      {/* HERO SECTION */}
+      {/* HERO */}
       <header className="pt-20 lg:pt-28">
         <div className="max-w-4xl mx-auto text-center px-4">
           <h2 className="text-5xl md:text-6xl font-extrabold leading-tight">
             Find Your Next Stay
           </h2>
+
           <p className="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">
             Discover homes, apartments and trusted services — all in one place.
             Hostein helps you manage bookings and properties with ease.
@@ -54,34 +72,38 @@ export default function Landing() {
       {/* MAIN CONTENT */}
       <main className="max-w-7xl mx-auto px-6 py-20">
 
-        {/* Categories */}
+        {/* CATEGORIES WITH IMAGES */}
         <h3 className="text-2xl font-semibold mb-6">Categories</h3>
+
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 mb-16">
-          {["Rentals", "Apartments", "Homes", "Services", "Experiences"].map((cat, idx) => (
+          {categories.map((cat, idx) => (
             <div
               key={idx}
-              className="bg-white rounded-xl p-6 shadow hover:shadow-lg transition cursor-pointer text-center border hover:border-red-500"
+              className="rounded-xl overflow-hidden shadow hover:shadow-lg transition cursor-pointer bg-white border hover:border-red-500"
             >
-              {cat}
+              <img
+                src={cat.src}
+                alt={cat.label}
+                className="w-full h-28 object-cover"
+              />
+              <div className="p-3 text-center font-medium text-gray-800">
+                {cat.label}
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Popular Cities */}
-        <h3 className="text-2xl font-semibold mb-6">Popular cities</h3>
+        {/* POPULAR CITIES */}
+        <h3 className="text-2xl font-semibold mb-6">Popular Cities</h3>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-          {[
-            { src: "nairobi", label: "Homes in Nairobi" },
-            { src: "mombasa", label: "Homes in Mombasa" },
-            { src: "kigali", label: "Homes in Kigali" },
-            { src: "eldoret", label: "Homes in Eldoret" }
-          ].map((city, i) => (
+          {cities.map((city, i) => (
             <div
               key={i}
               className="rounded-xl overflow-hidden shadow hover:shadow-xl transition transform hover:-translate-y-1 cursor-pointer bg-white"
             >
               <img
-                src={`https://source.unsplash.com/600x400/?${city.src}`}
+                src={city.src}
                 alt={city.label}
                 className="w-full h-40 object-cover"
               />
