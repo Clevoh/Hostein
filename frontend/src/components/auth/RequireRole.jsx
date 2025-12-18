@@ -1,17 +1,16 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
-export default function RequireRole({ role, children }) {
-  const userRole = localStorage.getItem("role");
+export default function RequireRole({ allowedRoles }) {
+  const { user } = useAuth();
 
-  // Not logged in
-  if (!userRole) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Wrong role
-  if (userRole !== role) {
+  if (!allowedRoles.includes(user.role)) {
     return <Navigate to="/" replace />;
   }
 
-  return children;
+  return <Outlet />;
 }
