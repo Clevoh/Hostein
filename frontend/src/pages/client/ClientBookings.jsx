@@ -1,16 +1,15 @@
-import React from "react";
-
 export default function ClientBookings() {
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">My Bookings</h1>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">My Bookings</h1>
 
-      {/* List of bookings */}
-      <div className="space-y-4">
-        <div className="bg-white shadow rounded-lg p-4">
-          <h3 className="font-semibold">No bookings yet</h3>
-          <p className="text-gray-600">Your bookings will appear here.</p>
-        </div>
+      <div className="bg-white rounded-xl border p-6 text-center">
+        <p className="text-gray-600 mb-4">
+          You don’t have any bookings yet.
+        </p>
+        <button className="px-5 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">
+          Find a place to stay
+        </button>
       </div>
     </div>
   );
