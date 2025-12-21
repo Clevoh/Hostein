@@ -1,25 +1,26 @@
-// src/layouts/dashboard/DashboardLayout.jsx
-import React from "react";
+import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
 import DashboardTopbar from "./DashboardTopbar";
 
 export default function DashboardLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-gray-100">
-      
-      {/* Sidebar */}
-      <DashboardSidebar />
+      {/* SIDEBAR */}
+      <DashboardSidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
-      {/* Content area */}
-      <div className="ml-64">
-        <DashboardTopbar />
+      {/* TOPBAR */}
+      <DashboardTopbar onMenuClick={() => setSidebarOpen(true)} />
 
-        {/* Where dashboard pages appear */}
-        <main className="pt-20 px-6 pb-8">
-          <Outlet />
-        </main>
-      </div>
+      {/* MAIN CONTENT */}
+      <main className="lg:ml-64 pt-24 px-6 transition-all">
+        <Outlet />
+      </main>
     </div>
   );
 }

@@ -1,32 +1,53 @@
-// src/pages/properties/PropertiesPage.jsx
-import React from "react";
-import { useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import AddButton from "../../components/AddButton";
+import Modal from "../../components/Modal";
 
 export default function PropertiesPage() {
-  const location = useLocation();
-  const query = new URLSearchParams(location.search);
-
-  const searchLocation = query.get("location");
-  const checkIn = query.get("checkIn");
-  const checkOut = query.get("checkOut");
-  const guests = query.get("guests");
+  const [open, setOpen] = useState(false);
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Properties</h2>
-      <p className="mb-6 text-gray-600">
-        Showing results for <strong>{searchLocation}</strong>, from{" "}
-        <strong>{checkIn}</strong> to <strong>{checkOut}</strong> for{" "}
-        <strong>{guests}</strong> guest(s).
-      </p>
-
-      {/* Here you can later fetch filtered properties from backend */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Example placeholder cards */}
-        <div className="bg-white shadow rounded-lg p-4">Property 1</div>
-        <div className="bg-white shadow rounded-lg p-4">Property 2</div>
-        <div className="bg-white shadow rounded-lg p-4">Property 3</div>
+    <div className="space-y-6">
+      {/* HEADER */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Properties</h2>
+        <AddButton label="Add Property" onClick={() => setOpen(true)} />
       </div>
+
+      {/* PROPERTY LIST */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-5 rounded-xl border">Property 1</div>
+        <div className="bg-white p-5 rounded-xl border">Property 2</div>
+      </div>
+
+      {/* MODAL */}
+      <Modal
+        title="Add Property"
+        isOpen={open}
+        onClose={() => setOpen(false)}
+      >
+        <form className="space-y-4">
+          <input
+            className="w-full border rounded-lg px-3 py-2"
+            placeholder="Property name"
+          />
+          <input
+            className="w-full border rounded-lg px-3 py-2"
+            placeholder="Location"
+          />
+          <input
+            className="w-full border rounded-lg px-3 py-2"
+            placeholder="Total units"
+            type="number"
+          />
+
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium"
+          >
+            Save Property
+          </button>
+        </form>
+      </Modal>
     </div>
   );
 }
