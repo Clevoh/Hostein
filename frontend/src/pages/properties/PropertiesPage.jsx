@@ -1,9 +1,16 @@
 import React, { useState } from "react";
 import AddButton from "../../components/AddButton";
 import Modal from "../../components/Modal";
+import { Trash2, Pencil, Plus } from "lucide-react";
+import { useProperties } from "../../context/PropertyContext";
+import AddPropertyModal from "./AddPropertyModal";
+import { useNavigate } from "react-router-dom";
 
 export default function PropertiesPage() {
+  const { properties, deleteProperty } = useProperties();
   const [open, setOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-6">
@@ -13,40 +20,88 @@ export default function PropertiesPage() {
         <AddButton label="Add Property" onClick={() => setOpen(true)} />
       </div>
 
-      {/* PROPERTY LIST */}
+      {/* PROPERTY GRID */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-5 rounded-xl border">Property 1</div>
-        <div className="bg-white p-5 rounded-xl border">Property 2</div>
+        {properties.map((p) => (
+          <div
+            key={p.id}
+            className="bg-white rounded-xl border shadow-sm overflow-hidden"
+          >
+            {p.images?.[0] && (
+              <img
+                src={p.images[0]}
+                alt={p.name}
+                className="h-40 w-full object-cover"
+              />
+            )}
+
+            <div className="p-4 space-y-1">
+              <h3 className="font-semibold text-lg">{p.name}</h3>
+              <p className="text-sm text-gray-500">
+                {p.city} • {p.category}
+              </p>
+
+              <p className="text-sm">
+                {p.rentalMode === "monthly" && `KSH ${p.monthlyPrice}/mo`}
+                {p.rentalMode === "daily" && `KSH ${p.dailyPrice}/day`}
+                {p.rentalMode === "both" &&
+                  `KSH ${p.monthlyPrice}/mo or ${p.dailyPrice}/day`}
+              </p>
+
+              <div className="flex justify-between items-center mt-4">
+                <button
+                  onClick={() => navigate(`/dashboard/units?property=${p.id}`)}
+                  className="flex items-center gap-1 text-sm text-blue-600"
+                >
+                  <Plus size={14} /> Add Units
+                </button>
+
+                <div className="flex gap-2">
+                  <button className="p-2 text-blue-600 hover:bg-blue-50 rounded">
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    onClick={() => setDeleteId(p.id)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* MODAL */}
-      <Modal
-        title="Add Property"
-        isOpen={open}
-        onClose={() => setOpen(false)}
-      >
-        <form className="space-y-4">
-          <input
-            className="w-full border rounded-lg px-3 py-2"
-            placeholder="Property name"
-          />
-          <input
-            className="w-full border rounded-lg px-3 py-2"
-            placeholder="Location"
-          />
-          <input
-            className="w-full border rounded-lg px-3 py-2"
-            placeholder="Total units"
-            type="number"
-          />
+      {open && <AddPropertyModal onClose={() => setOpen(false)} />}
 
+      {/* DELETE CONFIRMATION */}
+      <Modal
+        title="Delete Property"
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+      >
+        <p className="text-gray-600 mb-6">
+          Are you sure you want to delete this property?
+        </p>
+
+        <div className="flex justify-end gap-3">
           <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium"
+            onClick={() => setDeleteId(null)}
+            className="px-4 py-2 border rounded-lg"
           >
-            Save Property
+            Cancel
           </button>
-        </form>
+          <button
+            onClick={() => {
+              deleteProperty(deleteId);
+              setDeleteId(null);
+            }}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg"
+          >
+            Delete
+          </button>
+        </div>
       </Modal>
     </div>
   );

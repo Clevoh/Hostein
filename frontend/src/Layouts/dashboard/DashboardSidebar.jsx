@@ -1,52 +1,65 @@
-import { NavLink } from "react-router-dom";
-import { Home, Building2, Grid, Users, X } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Building2,
+  Home,
+  Users,
+  LogOut,
+  X,
+} from "lucide-react";
 
 export default function DashboardSidebar({ open, onClose }) {
-  const navItem =
-    "relative flex items-center gap-3 px-5 py-3 rounded-lg text-gray-700 hover:bg-blue-50 transition";
+  const navigate = useNavigate();
 
-  const activeItem =
-    "bg-blue-600 text-white shadow before:absolute before:left-0 before:top-0 before:h-full before:w-1 before:bg-blue-800 before:rounded-r";
+  const logout = () => {
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
+  const navItem =
+    "flex items-center gap-3 px-4 py-2 rounded-lg transition text-sm font-medium";
+
+  const navActive = "bg-blue-50 text-blue-600";
+  const navInactive = "text-gray-700 hover:bg-gray-100";
 
   return (
     <>
       {/* MOBILE OVERLAY */}
       {open && (
         <div
-          onClick={onClose}
           className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={onClose}
         />
       )}
 
       {/* SIDEBAR */}
-      <div
+      <aside
         className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg p-6
-          transform transition-transform duration-300
+          fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r
+          flex flex-col transform transition-transform duration-300
           ${open ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0
         `}
       >
         {/* HEADER */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold">Hostein</h1>
-
-          {/* CLOSE BUTTON (MOBILE ONLY) */}
+        <div className="h-16 flex items-center justify-between px-4 border-b">
+          <h1 className="text-xl font-bold">Hostein</h1>
           <button onClick={onClose} className="lg:hidden">
-            <X className="w-5 h-5 text-gray-600" />
+            <X />
           </button>
         </div>
 
         {/* NAV */}
-        <nav className="flex flex-col gap-2">
+        <nav className="flex-1 p-4 space-y-1">
           <NavLink
             to="/dashboard"
+            end
             onClick={onClose}
             className={({ isActive }) =>
-              `${navItem} ${isActive ? activeItem : ""}`
+              `${navItem} ${isActive ? navActive : navInactive}`
             }
           >
-            <Home size={20} />
+            <LayoutDashboard size={18} />
             Overview
           </NavLink>
 
@@ -54,10 +67,10 @@ export default function DashboardSidebar({ open, onClose }) {
             to="/dashboard/properties"
             onClick={onClose}
             className={({ isActive }) =>
-              `${navItem} ${isActive ? activeItem : ""}`
+              `${navItem} ${isActive ? navActive : navInactive}`
             }
           >
-            <Building2 size={20} />
+            <Building2 size={18} />
             Properties
           </NavLink>
 
@@ -65,10 +78,10 @@ export default function DashboardSidebar({ open, onClose }) {
             to="/dashboard/units"
             onClick={onClose}
             className={({ isActive }) =>
-              `${navItem} ${isActive ? activeItem : ""}`
+              `${navItem} ${isActive ? navActive : navInactive}`
             }
           >
-            <Grid size={20} />
+            <Home size={18} />
             Units
           </NavLink>
 
@@ -76,14 +89,25 @@ export default function DashboardSidebar({ open, onClose }) {
             to="/dashboard/tenants"
             onClick={onClose}
             className={({ isActive }) =>
-              `${navItem} ${isActive ? activeItem : ""}`
+              `${navItem} ${isActive ? navActive : navInactive}`
             }
           >
-            <Users size={20} />
+            <Users size={18} />
             Tenants
           </NavLink>
         </nav>
-      </div>
+
+        {/* LOGOUT */}
+        <div className="border-t p-4">
+          <button
+            onClick={logout}
+            className="flex items-center gap-3 text-red-600 w-full px-4 py-2 rounded-lg hover:bg-red-50"
+          >
+            <LogOut size={18} />
+            Logout
+          </button>
+        </div>
+      </aside>
     </>
   );
 }

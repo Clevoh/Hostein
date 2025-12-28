@@ -3,24 +3,24 @@ import Notifications from "../../components/Notifications";
 
 export default function DashboardTopbar({ onMenuClick }) {
   return (
-    <div className="fixed top-0 left-0 lg:left-64 right-0 h-16 bg-white border-b flex items-center px-6 z-10">
+    <header className="fixed top-0 left-0 lg:left-64 right-0 h-16 bg-white border-b flex items-center px-4 md:px-6 z-30">
       {/* MOBILE MENU */}
       <button
         onClick={onMenuClick}
-        className="lg:hidden mr-4"
+        className="lg:hidden mr-3"
       >
         <Menu />
       </button>
 
-      {/* PAGE TITLE */}
-      <h1 className="font-semibold text-lg text-gray-800">
-        Dashboard
+      {/* TITLE */}
+      <h1 className="font-semibold text-gray-800">
+        Host Dashboard
       </h1>
 
-      {/* RIGHT ACTIONS */}
+      {/* RIGHT */}
       <div className="ml-auto flex items-center gap-4">
         <Notifications />
       </div>
-    </div>
+    </header>
   );
 }

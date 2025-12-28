@@ -279,7 +279,7 @@ export default function HosteinSearchBarAdvanced() {
         {/* SEARCH BUTTON */}
         <button
           type="submit"
-          className="bg-red-600 hover:bg-red-700 text-white p-3 ml-3 rounded-full"
+          className="bg-blue-600 hover:bg-indigo-700 text-white p-3 ml-3 rounded-full"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" stroke="white" viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="6" strokeWidth="2" />
