@@ -17,29 +17,27 @@ export default function DashboardSidebar({ open, onClose }) {
   };
 
   const navItem =
-    "flex items-center gap-3 px-4 py-2 rounded-lg transition text-sm font-medium";
+    "flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition";
 
   const navActive = "bg-blue-50 text-blue-600";
   const navInactive = "text-gray-700 hover:bg-gray-100";
 
   return (
     <>
-      {/* MOBILE OVERLAY */}
-      {open && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-          onClick={onClose}
-        />
-      )}
+      {/* OVERLAY */}
+      <div
+        onClick={onClose}
+        className={`fixed inset-0 bg-black/40 z-40 transition-opacity duration-300
+        ${open ? "opacity-100 visible" : "opacity-0 invisible"}
+        lg:hidden`}
+      />
 
       {/* SIDEBAR */}
       <aside
-        className={`
-          fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r
-          flex flex-col transform transition-transform duration-300
-          ${open ? "translate-x-0" : "-translate-x-full"}
-          lg:translate-x-0
-        `}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r
+        flex flex-col transform transition-transform duration-300 ease-in-out
+        ${open ? "translate-x-0" : "-translate-x-full"}
+        lg:translate-x-0 lg:static`}
       >
         {/* HEADER */}
         <div className="h-16 flex items-center justify-between px-4 border-b">
