@@ -1,14 +1,23 @@
-// routes/propertyRoutes.js
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const propertyController = require('../controllers/propertyController');
+const auth = require("../middleware/authMiddleware");
+const { restrictTo } = require("../middleware/roleMiddleware");
 
-// CRUD Routes
-router.post('/', propertyController.createProperty);
-router.get('/', propertyController.getAllProperties);
-router.get('/:id', propertyController.getPropertyById);
-router.put('/:id', propertyController.updateProperty);
-router.delete('/:id', propertyController.deleteProperty);
-router.get("/host/:hostId", propertyController.getPropertiesByHost);
+const {
+  createProperty,
+  getAllProperties,
+  getPropertyById,
+  updateProperty,
+  deleteProperty,
+  getPropertiesByHost,
+} = require("../controllers/propertyController");
+
+router.get("/", getAllProperties);
+router.get("/:id", getPropertyById);
+router.get("/host/:hostId", auth, getPropertiesByHost);
+
+router.post("/", auth, restrictTo("host", "admin"), createProperty);
+router.put("/:id", auth, restrictTo("host", "admin"), updateProperty);
+router.delete("/:id", auth, restrictTo("admin"), deleteProperty);
 
 module.exports = router;

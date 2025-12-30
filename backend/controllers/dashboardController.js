@@ -6,55 +6,48 @@ const Booking = require("../models/Booking");
 
 exports.getDashboardStats = async (req, res) => {
   try {
-    // ------------------------------
-    //  BASIC TOTALS
-    // ------------------------------
+    // TOTAL COUNTS
     const totalProperties = await Property.countDocuments();
     const totalUnits = await Unit.countDocuments();
-    const totalTenants = await Tenant.countDocuments({ isActive: true });
-
-    // Units breakdown
     const occupiedUnits = await Unit.countDocuments({ isOccupied: true });
     const emptyUnits = totalUnits - occupiedUnits;
+    const totalTenants = await Tenant.countDocuments({ isActive: true });
 
-    // ------------------------------
-    //  MONTHLY REVENUE (LAST 12 MONTHS)
-    // ------------------------------
+    // LAST 12 MONTHS REVENUE
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
     const monthlyRevenue = await Payment.aggregate([
-      { $match: { date: { $gte: oneYearAgo } } },
+      { $match: { paymentDate: { $gte: oneYearAgo }, status: "paid" } },
       {
         $group: {
           _id: {
-            year: { $year: "$date" },
-            month: { $month: "$date" }
+            year: { $year: "$paymentDate" },
+            month: { $month: "$paymentDate" },
           },
-          totalAmount: { $sum: "$amount" }
-        }
+          total: { $sum: "$amount" },
+        },
       },
-      { $sort: { "_id.year": 1, "_id.month": 1 } }
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
     ]);
 
-    // ------------------------------
-    //  TOTAL REVENUE
-    // ------------------------------
+    // TOTAL REVENUE
     const totalRevenueAgg = await Payment.aggregate([
-      { $group: { _id: null, total: { $sum: "$amount" } } }
+      { $match: { status: "paid" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
     ]);
     const totalRevenue = totalRevenueAgg[0]?.total || 0;
 
-    // ------------------------------
-    //  TOP PROPERTIES BY OCCUPANCY
-    // ------------------------------
+    // TOP PROPERTIES BY OCCUPANCY
     const topProperties = await Unit.aggregate([
       {
         $group: {
           _id: "$property",
           totalUnits: { $sum: 1 },
-          occupiedUnits: { $sum: { $cond: ["$isOccupied", 1, 0] } }
-        }
+          occupiedUnits: {
+            $sum: { $cond: ["$isOccupied", 1, 0] },
+          },
+        },
       },
       {
         $project: {
@@ -64,39 +57,32 @@ exports.getDashboardStats = async (req, res) => {
             $cond: [
               { $eq: ["$totalUnits", 0] },
               0,
-              { $divide: ["$occupiedUnits", "$totalUnits"] }
-            ]
-          }
-        }
+              { $divide: ["$occupiedUnits", "$totalUnits"] },
+            ],
+          },
+        },
       },
       { $sort: { occupancyRate: -1 } },
-      { $limit: 5 }
+      { $limit: 5 },
     ]);
 
-    // ------------------------------
-    //  OVERDUE PAYMENTS
-    // ------------------------------
-    const overduePayments = await Payment.countDocuments({ status: "overdue" });
+    // OVERDUE PAYMENTS
+    const overduePayments = await Payment.countDocuments({
+      status: "overdue",
+    });
 
-    // ------------------------------
-    //  LATEST TENANTS
-    // ------------------------------
+    // RECENT TENANTS
     const latestTenants = await Tenant.find()
       .sort({ createdAt: -1 })
       .limit(5)
       .populate("unit property");
 
-    // ------------------------------
-    //  LATEST BOOKINGS
-    // ------------------------------
+    // RECENT BOOKINGS
     const latestBookings = await Booking.find()
       .sort({ createdAt: -1 })
       .limit(5)
-      .populate("property tenant");
+      .populate("property guest");
 
-    // ------------------------------
-    //  FINAL RESPONSE
-    // ------------------------------
     res.status(200).json({
       totals: {
         totalProperties,
@@ -114,9 +100,8 @@ exports.getDashboardStats = async (req, res) => {
       recent: {
         latestTenants,
         latestBookings,
-      }
+      },
     });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
