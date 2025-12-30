@@ -1,6 +1,5 @@
-// src/Layouts/dashboard/DashboardLayout.jsx
-import { useState } from "react";
 import { Outlet } from "react-router-dom";
+import { useState } from "react";
 import DashboardSidebar from "./DashboardSidebar";
 import DashboardTopbar from "./DashboardTopbar";
 
@@ -8,17 +7,18 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen bg-gray-100">
       {/* SIDEBAR */}
-      <DashboardSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <DashboardSidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
-      {/* MAIN CONTENT */}
-      <div className="flex-1 flex flex-col">
-        {/* TOPBAR */}
+      {/* MAIN AREA */}
+      <div className="lg:ml-64">
         <DashboardTopbar onMenuClick={() => setSidebarOpen(true)} />
 
-        {/* CONTENT */}
-        <main className="flex-1 mt-16 p-4 sm:p-6 md:p-8">
+        <main className="pt-20 px-4 md:px-6">
           <Outlet />
         </main>
       </div>

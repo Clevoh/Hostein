@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Modal from "../../components/Modal";
 import AddButton from "../../components/AddButton";
 import { useProperties } from "../../context/PropertyContext";
@@ -18,27 +18,27 @@ export default function TenantsPage() {
     startDate: "",
   });
 
-  /* BUILD TENANT LIST */
-  const tenants = properties.flatMap((p) =>
-    p.units.flatMap((u) =>
-      (u.tenants || [])
+  /* BUILD ACTIVE TENANTS LIST */
+  const tenants = properties.flatMap((property) =>
+    property.units?.flatMap((unit) =>
+      (unit.tenants || [])
         .filter((t) => t.status === "active")
         .map((t) => ({
           ...t,
-          propertyId: p.id,
-          unitId: u.id,
-          propertyName: p.name,
-          unitName: u.name,
+          propertyId: property._id,
+          propertyName: property.title,
+          unitId: unit._id,
+          unitName: unit.unitNumber,
         }))
     )
   );
 
   const selectedProperty = properties.find(
-    (p) => p.id === Number(form.propertyId)
+    (p) => p._id === form.propertyId
   );
 
   const selectedUnit = selectedProperty?.units.find(
-    (u) => u.id === Number(form.unitId)
+    (u) => u._id === form.unitId
   );
 
   /* ADD TENANT */
@@ -46,14 +46,14 @@ export default function TenantsPage() {
     if (!selectedProperty || !selectedUnit) return;
 
     const updatedUnits = selectedProperty.units.map((u) =>
-      u.id === selectedUnit.id
+      u._id === selectedUnit._id
         ? {
             ...u,
-            status: "occupied",
+            isOccupied: true,
             tenants: [
               ...(u.tenants || []),
               {
-                id: Date.now(),
+                _id: Date.now().toString(),
                 name: form.name,
                 email: form.email,
                 startDate: form.startDate,
@@ -64,7 +64,7 @@ export default function TenantsPage() {
         : u
     );
 
-    updateProperty(selectedProperty.id, {
+    updateProperty(selectedProperty._id, {
       ...selectedProperty,
       units: updatedUnits,
     });
@@ -84,16 +84,16 @@ export default function TenantsPage() {
   const confirmMoveOut = () => {
     const { propertyId, unitId, tenantId } = moveOutData;
 
-    const property = properties.find((p) => p.id === propertyId);
+    const property = properties.find((p) => p._id === propertyId);
 
     const updatedUnits = property.units.map((u) =>
-      u.id === unitId
+      u._id === unitId
         ? {
             ...u,
-            status: "vacant",
+            isOccupied: false,
             tenants: u.tenants.map((t) =>
-              t.id === tenantId
-                ? { ...t, status: "moved-out", endDate: new Date().toISOString() }
+              t._id === tenantId
+                ? { ...t, status: "inactive", endDate: new Date() }
                 : t
             ),
           }
@@ -117,8 +117,8 @@ export default function TenantsPage() {
       </div>
 
       {/* TENANTS TABLE */}
-      <div className="bg-white border rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white border rounded-xl overflow-x-auto">
+        <table className="w-full text-sm min-w-[700px]">
           <thead className="bg-gray-50">
             <tr>
               <th className="p-3 text-left">Tenant</th>
@@ -130,10 +130,10 @@ export default function TenantsPage() {
           </thead>
           <tbody>
             {tenants.map((t) => (
-              <tr key={t.id} className="border-t">
+              <tr key={t._id} className="border-t">
                 <td className="p-3">
                   <div className="font-medium">{t.name}</div>
-                  <div className="text-gray-500 text-xs">{t.email}</div>
+                  <div className="text-xs text-gray-500">{t.email}</div>
                 </td>
                 <td className="p-3">{t.propertyName}</td>
                 <td className="p-3">{t.unitName}</td>
@@ -142,7 +142,7 @@ export default function TenantsPage() {
                   <button
                     onClick={() =>
                       setMoveOutData({
-                        tenantId: t.id,
+                        tenantId: t._id,
                         unitId: t.unitId,
                         propertyId: t.propertyId,
                       })
@@ -192,8 +192,8 @@ export default function TenantsPage() {
           >
             <option value="">Select property</option>
             {properties.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
+              <option key={p._id} value={p._id}>
+                {p.title}
               </option>
             ))}
           </select>
@@ -202,14 +202,16 @@ export default function TenantsPage() {
             <select
               className="input"
               value={form.unitId}
-              onChange={(e) => setForm({ ...form, unitId: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, unitId: e.target.value })
+              }
             >
               <option value="">Select vacant unit</option>
               {selectedProperty.units
-                .filter((u) => u.status === "vacant")
+                .filter((u) => !u.isOccupied)
                 .map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} ({u.type})
+                  <option key={u._id} value={u._id}>
+                    {u.unitNumber}
                   </option>
                 ))}
             </select>
@@ -240,7 +242,7 @@ export default function TenantsPage() {
         onClose={() => setMoveOutData(null)}
       >
         <p className="text-gray-600 mb-6">
-          Are you sure you want to move out this tenant?  
+          Are you sure you want to move out this tenant?
           The unit will become vacant.
         </p>
 

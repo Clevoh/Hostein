@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import AddButton from "../../components/AddButton";
 import Modal from "../../components/Modal";
 import { Trash2, Pencil, Plus } from "lucide-react";
@@ -21,39 +21,41 @@ export default function PropertiesPage() {
       </div>
 
       {/* PROPERTY GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {properties.map((p) => (
           <div
-            key={p.id}
+            key={p._id}
             className="bg-white rounded-xl border shadow-sm overflow-hidden"
           >
             {p.images?.[0] && (
               <img
                 src={p.images[0]}
-                alt={p.name}
+                alt={p.title}
                 className="h-40 w-full object-cover"
               />
             )}
 
             <div className="p-4 space-y-1">
-              <h3 className="font-semibold text-lg">{p.name}</h3>
+              <h3 className="font-semibold text-lg">{p.title}</h3>
+
               <p className="text-sm text-gray-500">
-                {p.city} • {p.category}
+                {p.city}, {p.country}
               </p>
 
-              <p className="text-sm">
-                {p.rentalMode === "monthly" && `KSH ${p.monthlyPrice}/mo`}
-                {p.rentalMode === "daily" && `KSH ${p.dailyPrice}/day`}
-                {p.rentalMode === "both" &&
-                  `KSH ${p.monthlyPrice}/mo or ${p.dailyPrice}/day`}
+              <p className="text-sm text-gray-700">
+                {p.pricePerNight
+                  ? `From $${p.pricePerNight} / night`
+                  : "Monthly rental"}
               </p>
 
               <div className="flex justify-between items-center mt-4">
                 <button
-                  onClick={() => navigate(`/dashboard/units?property=${p.id}`)}
+                  onClick={() =>
+                    navigate(`/dashboard/units?property=${p._id}`)
+                  }
                   className="flex items-center gap-1 text-sm text-blue-600"
                 >
-                  <Plus size={14} /> Add Units
+                  <Plus size={14} /> Manage Units
                 </button>
 
                 <div className="flex gap-2">
@@ -61,7 +63,7 @@ export default function PropertiesPage() {
                     <Pencil size={16} />
                   </button>
                   <button
-                    onClick={() => setDeleteId(p.id)}
+                    onClick={() => setDeleteId(p._id)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded"
                   >
                     <Trash2 size={16} />
@@ -71,6 +73,12 @@ export default function PropertiesPage() {
             </div>
           </div>
         ))}
+
+        {properties.length === 0 && (
+          <div className="col-span-full text-center text-gray-500 py-12">
+            No properties added yet
+          </div>
+        )}
       </div>
 
       {open && <AddPropertyModal onClose={() => setOpen(false)} />}

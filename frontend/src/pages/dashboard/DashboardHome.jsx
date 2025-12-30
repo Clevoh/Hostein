@@ -1,83 +1,62 @@
-// src/pages/dashboard/DashboardHome.jsx
-import React from "react";
+import { useEffect, useState } from "react";
+import { getDashboardStats } from "../../services/dashboardService";
 import StatCard from "../../components/StatCard";
-import DataTable from "../../components/DataTable";
-import DashboardCharts from "../../components/DashboardCharts";
-import { Building2, Grid, Users, CreditCard } from "lucide-react";
 
 export default function DashboardHome() {
-  const stats = [
-    {
-      title: "Total Properties",
-      value: 12,
-      icon: Building2,
-    },
-    {
-      title: "Total Units",
-      value: 48,
-      icon: Grid,
-    },
-    {
-      title: "Occupied Units",
-      value: 35,
-      icon: Users,
-    },
-    {
-      title: "Monthly Revenue",
-      value: "KSH 270,000",
-      icon: CreditCard,
-    },
-  ];
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const recentTenants = [
-    { name: "Clevoh Lih", unit: "A13", phone: "0712345679", status: "Active" },
-    { name: "John Mwangi", unit: "A12", phone: "0712345678", status: "Active" },
-    { name: "Sarah W.", unit: "B03", phone: "0798765432", status: "Pending" },
-  ];
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const data = await getDashboardStats();
+        setStats(data);
+      } catch (error) {
+        console.error("Dashboard error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const columns = [
-    { key: "name", title: "Name" },
-    { key: "unit", title: "Unit" },
-    { key: "phone", title: "Phone" },
-    {
-      key: "status",
-      title: "Status",
-      render: (row) => (
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold
-            ${
-              row.status === "Active"
-                ? "bg-green-100 text-green-700"
-                : "bg-yellow-100 text-yellow-700"
-            }`}
-        >
-          {row.status}
-        </span>
-      ),
-    },
-  ];
+    loadStats();
+  }, []);
+
+  if (loading) {
+    return <p className="text-gray-500">Loading dashboard...</p>;
+  }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       {/* STATS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
-          <StatCard
-            key={stat.title}
-            title={stat.title}
-            value={stat.value}
-            icon={stat.icon}
-          />
-        ))}
+        <StatCard
+          title="Properties"
+          value={stats.totals.totalProperties}
+        />
+        <StatCard
+          title="Units"
+          value={stats.totals.totalUnits}
+        />
+        <StatCard
+          title="Occupied Units"
+          value={stats.totals.occupiedUnits}
+        />
+        <StatCard
+          title="Revenue"
+          value={`$${stats.totals.totalRevenue}`}
+        />
       </div>
 
-      {/* CHARTS */}
-      <DashboardCharts />
-
       {/* RECENT TENANTS */}
-      <div className="bg-white rounded-xl border shadow-sm p-6">
-        <h2 className="text-lg font-semibold mb-4">Recent Tenants</h2>
-        <DataTable columns={columns} rows={recentTenants} />
+      <div className="bg-white rounded-xl p-6 shadow">
+        <h2 className="font-semibold mb-4">Recent Tenants</h2>
+        <ul className="space-y-2">
+          {stats.recent.latestTenants.map((tenant) => (
+            <li key={tenant._id} className="text-sm text-gray-700">
+              {tenant.name} – {tenant.unit?.name || "Unassigned"}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
