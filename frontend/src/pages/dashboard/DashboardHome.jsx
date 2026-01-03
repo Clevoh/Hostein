@@ -1,47 +1,62 @@
-// src/pages/dashboard/DashboardHome.jsx
-import React from "react";
+import { useEffect, useState } from "react";
+import { getDashboardStats } from "../../services/dashboardService";
 import StatCard from "../../components/StatCard";
-import DataTable from "../../components/DataTable";
 
 export default function DashboardHome() {
-  // placeholder data — replace with API calls
-  const stats = [
-    { title: "Total Properties", value: 12 },
-    { title: "Total Units", value: 48 },
-    { title: "Occupied Units", value: 35 },
-    { title: "Monthly Revenue", value: "KSH 270,000" },
-  ];
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const recentTenants = [
-    { name: "Clevoh Lih", unit: "Aa13", phone: "0712345679", status: "Active" },
-    { name: "John Mwangi", unit: "A12", phone: "0712345678", status: "Active" },
-    { name: "Sarah W.", unit: "B03", phone: "0798765432", status: "Active" },
-    { name: "Peter O.", unit: "C07", phone: "0700112233", status: "Pending" },
-  ];
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const data = await getDashboardStats();
+        setStats(data);
+      } catch (error) {
+        console.error("Dashboard error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const columns = [
-    { key: "name", title: "Name" },
-    { key: "unit", title: "Unit" },
-    { key: "phone", title: "Phone" },
-    { Key: "Duration", title: "Duration"},
-    { key: "status", title: "Status", render: (r) => (
-      <span className={r.status === "Active" ? "text-green-600 font-semibold" : r.status === "Pending" ? "text-yellow-600 font-semibold" : "text-gray-600"}>
-        {r.status}
-      </span>
-    ) },
-  ];
+    loadStats();
+  }, []);
+
+  if (loading) {
+    return <p className="text-gray-500">Loading dashboard...</p>;
+  }
 
   return (
-    <div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        {stats.map((s) => (
-          <StatCard key={s.title} title={s.title} value={s.value} />
-        ))}
+    <div className="space-y-6">
+      {/* STATS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          title="Properties"
+          value={stats.totals.totalProperties}
+        />
+        <StatCard
+          title="Units"
+          value={stats.totals.totalUnits}
+        />
+        <StatCard
+          title="Occupied Units"
+          value={stats.totals.occupiedUnits}
+        />
+        <StatCard
+          title="Revenue"
+          value={`$${stats.totals.totalRevenue}`}
+        />
       </div>
 
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">Recent Tenants</h2>
-        <DataTable columns={columns} rows={recentTenants} />
+      {/* RECENT TENANTS */}
+      <div className="bg-white rounded-xl p-6 shadow">
+        <h2 className="font-semibold mb-4">Recent Tenants</h2>
+        <ul className="space-y-2">
+          {stats.recent.latestTenants.map((tenant) => (
+            <li key={tenant._id} className="text-sm text-gray-700">
+              {tenant.name} – {tenant.unit?.name || "Unassigned"}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

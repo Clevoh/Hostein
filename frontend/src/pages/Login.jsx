@@ -1,37 +1,44 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import api from "../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [form, setForm] = useState({
     email: "",
     password: "",
-    role: "client",
   });
 
-  function handleChange(e) {
+  const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
-  }
 
-  function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    const userData = {
-      email: form.email,
-      role: form.role,
-      token: "mock-jwt-token",
-      expiresAt: Date.now() + 60 * 60 * 1000,
-    };
+    try {
+      const res = await api.post("/auth/login", form);
 
-    login(userData);
+      const { token, user } = res.data;
 
-    if (form.role === "host") navigate("/dashboard");
-    else if (form.role === "admin") navigate("/admin");
-    else navigate("/client");
-  }
+      // Store auth
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      // Role-based redirect
+      if (user.role === "host") navigate("/dashboard");
+      else if (user.role === "admin") navigate("/admin");
+      else navigate("/client");
+    } catch (err) {
+      setError(err.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
@@ -40,12 +47,18 @@ export default function Login() {
           Login to Hostein
         </h2>
 
-        <form onSubmit={handleSubmit}>
+        {error && (
+          <div className="mb-4 text-red-600 bg-red-50 p-3 rounded">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
             name="email"
             type="email"
             onChange={handleChange}
-            className="w-full mb-4 px-4 py-2 border rounded"
+            className="w-full px-4 py-2 border rounded"
             placeholder="Email"
             required
           />
@@ -54,23 +67,16 @@ export default function Login() {
             name="password"
             type="password"
             onChange={handleChange}
-            className="w-full mb-4 px-4 py-2 border rounded"
+            className="w-full px-4 py-2 border rounded"
             placeholder="Password"
             required
           />
 
-          <select
-            name="role"
-            onChange={handleChange}
-            className="w-full mb-6 px-4 py-2 border rounded"
+          <button
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-60"
           >
-            <option value="client">Client</option>
-            <option value="host">Host</option>
-            <option value="admin">Admin</option>
-          </select>
-
-          <button className="w-full bg-blue-600 text-white py-2 rounded">
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
       </div>

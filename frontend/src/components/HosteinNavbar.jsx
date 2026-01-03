@@ -22,7 +22,7 @@ export default function HosteinNavbar({ children }) {
           
           {/* LEFT — LOGO */}
           <Link to="/" className="flex items-center gap-2">
-            <span className="text-red-500 text-3xl font-extrabold">H</span>
+            <span className="text-blue-600 text-3xl font-extrabold">H</span>
             <span className="text-lg font-semibold text-gray-800">Hostein</span>
           </Link>
 

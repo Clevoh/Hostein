@@ -1,32 +1,116 @@
-// src/pages/properties/PropertiesPage.jsx
-import React from "react";
-import { useLocation } from "react-router-dom";
+import { useState } from "react";
+import AddButton from "../../components/AddButton";
+import Modal from "../../components/Modal";
+import { Trash2, Pencil, Plus } from "lucide-react";
+import { useProperties } from "../../context/PropertyContext";
+import AddPropertyModal from "./AddPropertyModal";
+import { useNavigate } from "react-router-dom";
 
 export default function PropertiesPage() {
-  const location = useLocation();
-  const query = new URLSearchParams(location.search);
-
-  const searchLocation = query.get("location");
-  const checkIn = query.get("checkIn");
-  const checkOut = query.get("checkOut");
-  const guests = query.get("guests");
+  const { properties, deleteProperty } = useProperties();
+  const [open, setOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const navigate = useNavigate();
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Properties</h2>
-      <p className="mb-6 text-gray-600">
-        Showing results for <strong>{searchLocation}</strong>, from{" "}
-        <strong>{checkIn}</strong> to <strong>{checkOut}</strong> for{" "}
-        <strong>{guests}</strong> guest(s).
-      </p>
-
-      {/* Here you can later fetch filtered properties from backend */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Example placeholder cards */}
-        <div className="bg-white shadow rounded-lg p-4">Property 1</div>
-        <div className="bg-white shadow rounded-lg p-4">Property 2</div>
-        <div className="bg-white shadow rounded-lg p-4">Property 3</div>
+    <div className="space-y-6">
+      {/* HEADER */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Properties</h2>
+        <AddButton label="Add Property" onClick={() => setOpen(true)} />
       </div>
+
+      {/* PROPERTY GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+        {properties.map((p) => (
+          <div
+            key={p._id}
+            className="bg-white rounded-xl border shadow-sm overflow-hidden"
+          >
+            {p.images?.[0] && (
+              <img
+                src={p.images[0]}
+                alt={p.title}
+                className="h-40 w-full object-cover"
+              />
+            )}
+
+            <div className="p-4 space-y-1">
+              <h3 className="font-semibold text-lg">{p.title}</h3>
+
+              <p className="text-sm text-gray-500">
+                {p.city}, {p.country}
+              </p>
+
+              <p className="text-sm text-gray-700">
+                {p.pricePerNight
+                  ? `From $${p.pricePerNight} / night`
+                  : "Monthly rental"}
+              </p>
+
+              <div className="flex justify-between items-center mt-4">
+                <button
+                  onClick={() =>
+                    navigate(`/dashboard/units?property=${p._id}`)
+                  }
+                  className="flex items-center gap-1 text-sm text-blue-600"
+                >
+                  <Plus size={14} /> Manage Units
+                </button>
+
+                <div className="flex gap-2">
+                  <button className="p-2 text-blue-600 hover:bg-blue-50 rounded">
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    onClick={() => setDeleteId(p._id)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {properties.length === 0 && (
+          <div className="col-span-full text-center text-gray-500 py-12">
+            No properties added yet
+          </div>
+        )}
+      </div>
+
+      {open && <AddPropertyModal onClose={() => setOpen(false)} />}
+
+      {/* DELETE CONFIRMATION */}
+      <Modal
+        title="Delete Property"
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+      >
+        <p className="text-gray-600 mb-6">
+          Are you sure you want to delete this property?
+        </p>
+
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => setDeleteId(null)}
+            className="px-4 py-2 border rounded-lg"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              deleteProperty(deleteId);
+              setDeleteId(null);
+            }}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg"
+          >
+            Delete
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
