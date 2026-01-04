@@ -1,143 +1,256 @@
+const mongoose = require("mongoose");
 const Unit = require("../models/Unit");
+const Property = require("../models/Property");
 const Tenant = require("../models/Tenant");
 
-// Create a new unit
+/* ===========================
+   CREATE UNIT
+=========================== */
 exports.createUnit = async (req, res) => {
-    try {
-        const unit = await Unit.create(req.body);
-        res.status(201).json(unit);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+  try {
+    const {
+      unitNumber,
+      unitType,
+      bedrooms,
+      bathrooms,
+      rentAmount,
+      property,
+    } = req.body;
+
+    // 🔴 Validate required fields
+    if (
+      !unitNumber ||
+      !unitType ||
+      bedrooms === undefined ||
+      bathrooms === undefined ||
+      rentAmount === undefined ||
+      !property
+    ) {
+      return res.status(400).json({
+        message: "All unit fields are required",
+      });
     }
+
+    // 🔴 Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(property)) {
+      return res.status(400).json({
+        message: "Invalid property ID",
+      });
+    }
+
+    // 🔴 Ensure property exists
+    const propertyExists = await Property.findById(property);
+    if (!propertyExists) {
+      return res.status(404).json({
+        message: "Property not found",
+      });
+    }
+
+    const unit = await Unit.create({
+      unitNumber,
+      unitType,
+      bedrooms: Number(bedrooms),
+      bathrooms: Number(bathrooms),
+      rentAmount: Number(rentAmount),
+      property,
+    });
+
+    res.status(201).json(unit);
+  } catch (error) {
+    // 🔴 Handle duplicate unit numbers
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: "Unit number already exists for this property",
+      });
+    }
+
+    console.error("CREATE UNIT ERROR:", error);
+    res.status(500).json({
+      message: "Failed to create unit",
+    });
+  }
 };
 
-// Get all units
+/* ===========================
+   GET ALL UNITS
+=========================== */
 exports.getUnits = async (req, res) => {
-    try {
-        const units = await Unit.find()
-            .populate("property")
-            .populate("tenant");
+  try {
+    const units = await Unit.find()
+      .populate("property", "title")
+      .populate("tenant", "name");
 
-        res.status(200).json(units);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    res.status(200).json(units);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
-// Get units for a specific property
+/* ===========================
+   GET UNITS BY PROPERTY
+=========================== */
 exports.getUnitsByProperty = async (req, res) => {
-    try {
-        const units = await Unit.find({ property: req.params.propertyId })
-            .populate("tenant");
+  try {
+    const { propertyId } = req.params;
 
-        res.status(200).json(units);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    if (!mongoose.Types.ObjectId.isValid(propertyId)) {
+      return res.status(400).json({
+        message: "Invalid property ID",
+      });
     }
+
+    const units = await Unit.find({ property: propertyId }).populate(
+      "tenant",
+      "name"
+    );
+
+    res.status(200).json(units);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
-// Get a single unit
+/* ===========================
+   GET UNIT BY ID
+=========================== */
 exports.getUnitById = async (req, res) => {
-    try {
-        const unit = await Unit.findById(req.params.id)
-            .populate("property")
-            .populate("tenant");
-
-        if (!unit) return res.status(404).json({ message: "Unit not found" });
-
-        res.status(200).json(unit);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid unit ID" });
     }
+
+    const unit = await Unit.findById(req.params.id)
+      .populate("property", "title")
+      .populate("tenant", "name");
+
+    if (!unit) {
+      return res.status(404).json({ message: "Unit not found" });
+    }
+
+    res.status(200).json(unit);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
-// Update a unit
+/* ===========================
+   UPDATE UNIT
+=========================== */
 exports.updateUnit = async (req, res) => {
-    try {
-        const unit = await Unit.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-        });
-
-        if (!unit) return res.status(404).json({ message: "Unit not found" });
-
-        res.status(200).json(unit);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid unit ID" });
     }
+
+    const unit = await Unit.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    if (!unit) {
+      return res.status(404).json({ message: "Unit not found" });
+    }
+
+    res.status(200).json(unit);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 };
 
-// Delete a unit
+/* ===========================
+   DELETE UNIT
+=========================== */
 exports.deleteUnit = async (req, res) => {
-    try {
-        const unit = await Unit.findByIdAndDelete(req.params.id);
-
-        if (!unit) return res.status(404).json({ message: "Unit not found" });
-
-        res.status(200).json({ message: "Unit deleted successfully" });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid unit ID" });
     }
+
+    const unit = await Unit.findByIdAndDelete(req.params.id);
+
+    if (!unit) {
+      return res.status(404).json({ message: "Unit not found" });
+    }
+
+    res.status(200).json({ message: "Unit deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
-// Assign tenant to unit
+/* ===========================
+   ASSIGN TENANT TO UNIT
+=========================== */
 exports.assignTenantToUnit = async (req, res) => {
-    try {
-        const { tenantId } = req.body;
+  try {
+    const { tenantId } = req.body;
 
-        const unit = await Unit.findById(req.params.id);
-        if (!unit) return res.status(404).json({ message: "Unit not found" });
-
-        const tenant = await Tenant.findById(tenantId);
-        if (!tenant) return res.status(404).json({ message: "Tenant not found" });
-
-        if (unit.isOccupied) {
-            return res.status(400).json({ message: "Unit already occupied" });
-        }
-
-        // Assign
-        unit.tenant = tenantId;
-        unit.isOccupied = true;
-        await unit.save();
-
-        // Update tenant
-        tenant.unit = unit._id;
-        tenant.property = unit.property;
-        tenant.isActive = true;
-        await tenant.save();
-
-        res.status(200).json({ message: "Tenant assigned to unit", unit });
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+    if (
+      !mongoose.Types.ObjectId.isValid(req.params.id) ||
+      !mongoose.Types.ObjectId.isValid(tenantId)
+    ) {
+      return res.status(400).json({ message: "Invalid ID provided" });
     }
+
+    const unit = await Unit.findById(req.params.id);
+    if (!unit) return res.status(404).json({ message: "Unit not found" });
+
+    if (unit.isOccupied) {
+      return res.status(400).json({ message: "Unit already occupied" });
+    }
+
+    const tenant = await Tenant.findById(tenantId);
+    if (!tenant) {
+      return res.status(404).json({ message: "Tenant not found" });
+    }
+
+    unit.tenant = tenantId;
+    unit.isOccupied = true;
+    await unit.save();
+
+    tenant.unit = unit._id;
+    tenant.property = unit.property;
+    tenant.isActive = true;
+    await tenant.save();
+
+    res.status(200).json({ message: "Tenant assigned", unit });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 };
 
-// Vacate a unit
+/* ===========================
+   VACATE UNIT
+=========================== */
 exports.vacateUnit = async (req, res) => {
-    try {
-        const unit = await Unit.findById(req.params.id);
-        if (!unit) return res.status(404).json({ message: "Unit not found" });
-
-        if (!unit.isOccupied) {
-            return res.status(400).json({ message: "Unit is already empty" });
-        }
-
-        const tenant = await Tenant.findById(unit.tenant);
-
-        // Unlink tenant
-        if (tenant) {
-            tenant.unit = null;
-            tenant.isActive = false;
-            tenant.leaseEnd = Date.now();
-            await tenant.save();
-        }
-
-        // Reset unit
-        unit.tenant = null;
-        unit.isOccupied = false;
-        await unit.save();
-
-        res.status(200).json({ message: "Unit vacated successfully", unit });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid unit ID" });
     }
+
+    const unit = await Unit.findById(req.params.id);
+    if (!unit) return res.status(404).json({ message: "Unit not found" });
+
+    if (!unit.isOccupied) {
+      return res.status(400).json({ message: "Unit already vacant" });
+    }
+
+    const tenant = await Tenant.findById(unit.tenant);
+
+    if (tenant) {
+      tenant.unit = null;
+      tenant.isActive = false;
+      tenant.leaseEnd = new Date();
+      await tenant.save();
+    }
+
+    unit.tenant = null;
+    unit.isOccupied = false;
+    await unit.save();
+
+    res.status(200).json({ message: "Unit vacated", unit });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
