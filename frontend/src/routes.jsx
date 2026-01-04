@@ -1,3 +1,4 @@
+// frontend/src/routes.jsx
 import { Routes, Route } from "react-router-dom";
 
 import Landing from "./pages/Landing";
@@ -39,8 +40,16 @@ export default function AppRoutes() {
       <Route element={<RequireRole allowedRoles={["host"]} />}>
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Overview />} />
+
+          {/* PROPERTIES */}
           <Route path="properties" element={<PropertiesPage />} />
-          <Route path="units" element={<UnitsPage />} />
+
+          {/*  UNITS — PROPERTY REQUIRED */}
+          <Route
+            path="properties/:propertyId/units"
+            element={<UnitsPage />}
+          />
+
           <Route path="tenants" element={<TenantsPage />} />
         </Route>
       </Route>

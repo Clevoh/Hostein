@@ -1,10 +1,10 @@
 import { useState } from "react";
-import AddButton from "../../components/AddButton";
-import Modal from "../../components/Modal";
-import { Trash2, Pencil, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import { useProperties } from "../../context/PropertyContext";
 import AddPropertyModal from "./AddPropertyModal";
-import { useNavigate } from "react-router-dom";
+import Modal from "../../components/Modal";
+import AddButton from "../../components/AddButton";
 
 export default function PropertiesPage() {
   const { properties, deleteProperty } = useProperties();
@@ -20,38 +20,35 @@ export default function PropertiesPage() {
         <AddButton label="Add Property" onClick={() => setOpen(true)} />
       </div>
 
-      {/* PROPERTY GRID */}
+      {/* GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {properties.map((p) => (
           <div
-            key={p._id}
+            key={p.id}
             className="bg-white rounded-xl border shadow-sm overflow-hidden"
           >
             {p.images?.[0] && (
               <img
                 src={p.images[0]}
-                alt={p.title}
+                alt={p.name}
                 className="h-40 w-full object-cover"
               />
             )}
 
             <div className="p-4 space-y-1">
-              <h3 className="font-semibold text-lg">{p.title}</h3>
+              <h3 className="font-semibold text-lg">{p.name}</h3>
 
               <p className="text-sm text-gray-500">
-                {p.city}, {p.country}
-              </p>
-
-              <p className="text-sm text-gray-700">
-                {p.pricePerNight
-                  ? `From $${p.pricePerNight} / night`
-                  : "Monthly rental"}
+                {p.city} — {p.address}
               </p>
 
               <div className="flex justify-between items-center mt-4">
+                {/* ✅ CORRECT UNIT NAVIGATION */}
                 <button
                   onClick={() =>
-                    navigate(`/dashboard/units?property=${p._id}`)
+                    navigate(
+                      `/dashboard/properties/${p.id}/units`
+                    )
                   }
                   className="flex items-center gap-1 text-sm text-blue-600"
                 >
@@ -63,7 +60,7 @@ export default function PropertiesPage() {
                     <Pencil size={16} />
                   </button>
                   <button
-                    onClick={() => setDeleteId(p._id)}
+                    onClick={() => setDeleteId(p.id)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded"
                   >
                     <Trash2 size={16} />
@@ -81,9 +78,10 @@ export default function PropertiesPage() {
         )}
       </div>
 
+      {/* ADD PROPERTY MODAL */}
       {open && <AddPropertyModal onClose={() => setOpen(false)} />}
 
-      {/* DELETE CONFIRMATION */}
+      {/* DELETE MODAL */}
       <Modal
         title="Delete Property"
         isOpen={!!deleteId}

@@ -1,7 +1,11 @@
 import api from "./api";
 
-export const assignTenantToUnit = (unitId, tenantId) =>
-  api.post(`/units/${unitId}/assign`, { tenantId });
+export const getUnitsByProperty = async (propertyId) => {
+  const res = await api.get(`/units/property/${propertyId}`);
+  return res.data;
+};
 
-export const vacateUnit = (unitId) =>
-  api.post(`/units/${unitId}/vacate`);
+export const createUnit = async (data) => {
+  const res = await api.post("/units", data);
+  return res.data;
+};
