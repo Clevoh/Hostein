@@ -7,10 +7,14 @@ import Modal from "../../components/Modal";
 import AddButton from "../../components/AddButton";
 
 export default function PropertiesPage() {
-  const { properties, deleteProperty } = useProperties();
+  const { properties, deleteProperty, loading } = useProperties();
   const [open, setOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const navigate = useNavigate();
+
+  if (loading) {
+    return <p className="text-gray-500">Loading properties…</p>;
+  }
 
   return (
     <div className="space-y-6">
@@ -24,31 +28,28 @@ export default function PropertiesPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {properties.map((p) => (
           <div
-            key={p.id}
+            key={p._id}
             className="bg-white rounded-xl border shadow-sm overflow-hidden"
           >
             {p.images?.[0] && (
               <img
                 src={p.images[0]}
-                alt={p.name}
+                alt={p.title}
                 className="h-40 w-full object-cover"
               />
             )}
 
             <div className="p-4 space-y-1">
-              <h3 className="font-semibold text-lg">{p.name}</h3>
+              <h3 className="font-semibold text-lg">{p.title}</h3>
 
               <p className="text-sm text-gray-500">
                 {p.city} — {p.address}
               </p>
 
               <div className="flex justify-between items-center mt-4">
-                {/* ✅ CORRECT UNIT NAVIGATION */}
                 <button
                   onClick={() =>
-                    navigate(
-                      `/dashboard/properties/${p.id}/units`
-                    )
+                    navigate(`/dashboard/properties/${p._id}/units`)
                   }
                   className="flex items-center gap-1 text-sm text-blue-600"
                 >
@@ -60,7 +61,7 @@ export default function PropertiesPage() {
                     <Pencil size={16} />
                   </button>
                   <button
-                    onClick={() => setDeleteId(p.id)}
+                    onClick={() => setDeleteId(p._id)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded"
                   >
                     <Trash2 size={16} />
@@ -78,7 +79,7 @@ export default function PropertiesPage() {
         )}
       </div>
 
-      {/* ADD PROPERTY MODAL */}
+      {/* ADD MODAL */}
       {open && <AddPropertyModal onClose={() => setOpen(false)} />}
 
       {/* DELETE MODAL */}
@@ -99,8 +100,8 @@ export default function PropertiesPage() {
             Cancel
           </button>
           <button
-            onClick={() => {
-              deleteProperty(deleteId);
+            onClick={async () => {
+              await deleteProperty(deleteId);
               setDeleteId(null);
             }}
             className="px-4 py-2 bg-red-600 text-white rounded-lg"

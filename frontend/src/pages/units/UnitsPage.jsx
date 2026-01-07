@@ -1,63 +1,95 @@
 import { useParams, Link } from "react-router-dom";
 import { useProperties } from "../../context/PropertyContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  getUnitsByProperty,
+  createUnit,
+  deleteUnit,
+} from "../../services/unitService";
 
 export default function UnitsPage() {
   const { propertyId } = useParams();
-  const { properties, addUnit, deleteUnit } = useProperties();
+  const { properties } = useProperties();
 
   const property = properties.find(
-    (p) => String(p.id) === String(propertyId)
+    (p) => String(p._id) === String(propertyId)
   );
 
-  /* =========================
-     FORM STATE
-  ========================= */
+  const [units, setUnits] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [form, setForm] = useState({
-    name: "",
-    rent: "",
-    type: "Bedsitter",
+    unitNumber: "",
+    unitType: "Bedsitter",
+    bedrooms: 0,
+    bathrooms: 1,
+    rentAmount: "",
   });
 
-  /* ❗ NO REDIRECTS */
+  /* ================= LOAD UNITS ================= */
+  useEffect(() => {
+    if (!propertyId) return;
+
+    const loadUnits = async () => {
+      try {
+        setLoading(true);
+        const data = await getUnitsByProperty(propertyId);
+        setUnits(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("LOAD UNITS FAILED", err);
+        setUnits([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUnits();
+  }, [propertyId]);
+
+  /* ================= PROPERTY GUARD ================= */
   if (!property) {
     return (
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">
-          Property not found
-        </h2>
+        <h2 className="text-xl font-semibold">Property not found</h2>
         <p className="text-gray-600">
           This property does not exist or was not loaded.
         </p>
-        <Link
-          to="/dashboard/properties"
-          className="text-blue-600 underline"
-        >
+        <Link to="/dashboard/properties" className="text-blue-600 underline">
           Back to Properties
         </Link>
       </div>
     );
   }
 
-  /* =========================
-     ADD UNIT
-  ========================= */
-  const handleAddUnit = () => {
-    if (!form.name || !form.rent) return;
+  /* ================= ADD UNIT ================= */
+  const handleAddUnit = async () => {
+    if (!form.unitNumber || !form.rentAmount) return;
 
-    addUnit(property.id, {
-      id: Date.now(),
-      name: form.name,
-      rent: form.rent,
-      type: form.type,
-      status: "vacant",
-    });
+    const payload = {
+      ...form,
+      rentAmount: Number(form.rentAmount),
+      property: propertyId, // 🔥 REQUIRED BY BACKEND
+    };
 
-    setForm({
-      name: "",
-      rent: "",
-      type: "Bedsitter",
-    });
+    try {
+      const created = await createUnit(payload);
+      setUnits((prev) => [created, ...prev]);
+      setForm({
+        unitNumber: "",
+        unitType: "Bedsitter",
+        bedrooms: 0,
+        bathrooms: 1,
+        rentAmount: "",
+      });
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to create unit");
+    }
+  };
+
+  /* ================= DELETE UNIT ================= */
+  const handleDelete = async (unitId) => {
+    await deleteUnit(unitId);
+    setUnits((prev) => prev.filter((u) => u._id !== unitId));
   };
 
   return (
@@ -65,9 +97,8 @@ export default function UnitsPage() {
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">
-          Units — {property.name}
+          Units — {property.title}
         </h2>
-
         <Link
           to="/dashboard/properties"
           className="text-sm text-blue-600"
@@ -77,31 +108,21 @@ export default function UnitsPage() {
       </div>
 
       {/* ADD UNIT FORM */}
-      <div className="bg-white border rounded-xl p-4 grid gap-4 md:grid-cols-4">
+      <div className="bg-white border rounded-xl p-4 grid gap-4 md:grid-cols-6">
         <input
           className="input"
-          placeholder="Unit name / number"
-          value={form.name}
+          placeholder="Unit number"
+          value={form.unitNumber}
           onChange={(e) =>
-            setForm({ ...form, name: e.target.value })
-          }
-        />
-
-        <input
-          type="number"
-          className="input"
-          placeholder="Rent amount"
-          value={form.rent}
-          onChange={(e) =>
-            setForm({ ...form, rent: e.target.value })
+            setForm({ ...form, unitNumber: e.target.value })
           }
         />
 
         <select
           className="input"
-          value={form.type}
+          value={form.unitType}
           onChange={(e) =>
-            setForm({ ...form, type: e.target.value })
+            setForm({ ...form, unitType: e.target.value })
           }
         >
           <option>Bedsitter</option>
@@ -112,6 +133,36 @@ export default function UnitsPage() {
           <option>3 Bedroom</option>
         </select>
 
+        <input
+          type="number"
+          className="input"
+          placeholder="Bedrooms"
+          value={form.bedrooms}
+          onChange={(e) =>
+            setForm({ ...form, bedrooms: e.target.value })
+          }
+        />
+
+        <input
+          type="number"
+          className="input"
+          placeholder="Bathrooms"
+          value={form.bathrooms}
+          onChange={(e) =>
+            setForm({ ...form, bathrooms: e.target.value })
+          }
+        />
+
+        <input
+          type="number"
+          className="input"
+          placeholder="Rent amount"
+          value={form.rentAmount}
+          onChange={(e) =>
+            setForm({ ...form, rentAmount: e.target.value })
+          }
+        />
+
         <button
           onClick={handleAddUnit}
           className="bg-blue-600 text-white rounded-lg px-4"
@@ -121,32 +172,30 @@ export default function UnitsPage() {
       </div>
 
       {/* UNITS LIST */}
-      <div className="grid gap-4">
-        {property.units.length === 0 && (
-          <p className="text-gray-500">
-            No units added yet
-          </p>
-        )}
+      {loading && <p className="text-gray-500">Loading units…</p>}
 
-        {property.units.map((unit) => (
+      {!loading && units.length === 0 && (
+        <p className="text-gray-500">No units added yet</p>
+      )}
+
+      <div className="grid gap-4">
+        {units.map((unit) => (
           <div
-            key={unit.id}
-            className="bg-white border rounded-lg p-4 flex justify-between items-center"
+            key={unit._id}
+            className="bg-white border rounded-lg p-4 flex justify-between"
           >
             <div>
               <p className="font-medium">
-                {unit.name} ({unit.type})
+                {unit.unitNumber} ({unit.unitType})
               </p>
               <p className="text-sm text-gray-500">
-                Rent: KES {unit.rent} · Status:{" "}
-                {unit.status}
+                Rent: {unit.rentAmount} ·{" "}
+                {unit.isOccupied ? "Occupied" : "Vacant"}
               </p>
             </div>
 
             <button
-              onClick={() =>
-                deleteUnit(property.id, unit.id)
-              }
+              onClick={() => handleDelete(unit._id)}
               className="text-red-600 text-sm"
             >
               Delete
