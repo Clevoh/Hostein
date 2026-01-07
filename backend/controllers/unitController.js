@@ -17,7 +17,7 @@ exports.createUnit = async (req, res) => {
       property,
     } = req.body;
 
-    // 🔴 Validate required fields
+    //  Validate required fields
     if (
       !unitNumber ||
       !unitType ||
@@ -31,14 +31,14 @@ exports.createUnit = async (req, res) => {
       });
     }
 
-    // 🔴 Validate ObjectId
+    //  Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(property)) {
       return res.status(400).json({
         message: "Invalid property ID",
       });
     }
 
-    // 🔴 Ensure property exists
+    //  Ensure property exists
     const propertyExists = await Property.findById(property);
     if (!propertyExists) {
       return res.status(404).json({
@@ -57,7 +57,7 @@ exports.createUnit = async (req, res) => {
 
     res.status(201).json(unit);
   } catch (error) {
-    // 🔴 Handle duplicate unit numbers
+    //  Handle duplicate unit numbers
     if (error.code === 11000) {
       return res.status(400).json({
         message: "Unit number already exists for this property",

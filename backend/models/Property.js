@@ -8,7 +8,6 @@ const propertySchema = new mongoose.Schema(
     city: { type: String, required: true },
     country: { type: String, required: true },
 
-    // NEW — defines how units behave
     category: {
       type: String,
       enum: ["apartment", "hostel", "short_stay"],
@@ -21,7 +20,7 @@ const propertySchema = new mongoose.Schema(
       required: true,
     },
 
-    pricePerNight: { type: Number }, // used for short stays
+    pricePerNight: { type: Number },
     host: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
     images: [String],
