@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Home, Building2, Grid, Users, LogOut, X } from "lucide-react";
+import { Home, Building2, Users, LogOut, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
 export default function DashboardSidebar({ open, onClose }) {
@@ -40,31 +40,33 @@ export default function DashboardSidebar({ open, onClose }) {
 
         {/* NAV */}
         <nav className="flex-1 p-4 space-y-2">
-          <NavLink to="/dashboard" onClick={onClose}
+          <NavLink
+            to="/dashboard"
+            onClick={onClose}
             className={({ isActive }) =>
               `${navItem} ${isActive ? activeItem : ""}`
-            }>
+            }
+          >
             <Home size={18} /> Overview
           </NavLink>
 
-          <NavLink to="/dashboard/properties" onClick={onClose}
+          <NavLink
+            to="/dashboard/properties"
+            onClick={onClose}
             className={({ isActive }) =>
               `${navItem} ${isActive ? activeItem : ""}`
-            }>
+            }
+          >
             <Building2 size={18} /> Properties
           </NavLink>
 
-          <NavLink to="/dashboard/units" onClick={onClose}
+          <NavLink
+            to="/dashboard/tenants"
+            onClick={onClose}
             className={({ isActive }) =>
               `${navItem} ${isActive ? activeItem : ""}`
-            }>
-            <Grid size={18} /> Units
-          </NavLink>
-
-          <NavLink to="/dashboard/tenants" onClick={onClose}
-            className={({ isActive }) =>
-              `${navItem} ${isActive ? activeItem : ""}`
-            }>
+            }
+          >
             <Users size={18} /> Tenants
           </NavLink>
         </nav>

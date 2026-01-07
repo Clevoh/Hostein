@@ -1,148 +1,65 @@
-// controllers/propertyController.js
 const Property = require("../models/Property");
-const User = require("../models/User");
 
-//  CREATE PROPERTY (Host creates listing)
 exports.createProperty = async (req, res) => {
   try {
-    const {
-      title,
-      description,
-      address,
-      city,
-      country,
-      pricePerNight,
-      amenities,
-      images,
-    } = req.body;
+    const hostId = req.user.id || req.user._id;
 
-    // Host is the authenticated user (later from middleware)
-    const hostId = req.body.host || req.user?._id;
+    const data = { ...req.body };
+    delete data._id; // 🔥 IMPORTANT
 
     const property = await Property.create({
-      title,
-      description,
-      address,
-      city,
-      country,
-      pricePerNight,
-      amenities,
-      images,
+      ...data,
       host: hostId,
     });
 
-    res
-      .status(201)
-      .json({ message: "Property created successfully", property });
+    res.status(201).json(property);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
-  }
-};
+    console.error("CREATE PROPERTY ERROR:", error);
 
-// GET ALL PROPERTIES (With filtering like Airbnb)
-exports.getAllProperties = async (req, res) => {
-  try {
-    const { city, country, minPrice, maxPrice } = req.query;
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: "Duplicate property detected",
+      });
+    }
 
-    let filter = {};
-
-    if (city) filter.city = city;
-    if (country) filter.country = country;
-    if (minPrice || maxPrice)
-      filter.pricePerNight = {
-        ...(minPrice && { $gte: minPrice }),
-        ...(maxPrice && { $lte: maxPrice }),
-      };
-
-    const properties = await Property.find(filter).populate(
-      "host",
-      "name email"
-    );
-
-    res.status(200).json(properties);
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
-  }
-};
-
-//  GET PROPERTY BY ID
-exports.getPropertyById = async (req, res) => {
-  try {
-    const property = await Property.findById(req.params.id).populate(
-      "host",
-      "name email"
-    );
-
-    if (!property)
-      return res.status(404).json({ message: "Property not found" });
-
-    res.status(200).json(property);
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
-  }
-};
-
-//  UPDATE PROPERTY (Host only)
-exports.updateProperty = async (req, res) => {
-  try {
-    const updates = req.body;
-
-    const property = await Property.findByIdAndUpdate(
-      req.params.id,
-      updates,
-      { new: true }
-    );
-
-    if (!property)
-      return res.status(404).json({ message: "Property not found" });
-
-    res.status(200).json({
-      message: "Property updated successfully",
-      property,
+    res.status(500).json({
+      message: error.message || "Server error",
     });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
   }
 };
 
-//  DELETE PROPERTY
-exports.deleteProperty = async (req, res) => {
-  try {
-    const property = await Property.findByIdAndDelete(req.params.id);
-
-    if (!property)
-      return res.status(404).json({ message: "Property not found" });
-
-    res.status(200).json({ message: "Property deleted successfully" });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
-  }
+exports.getAllProperties = async (req, res) => {
+  const properties = await Property.find().populate("host", "name email");
+  res.json(properties);
 };
 
-//  GET PROPERTIES BY HOST
+exports.getPropertyById = async (req, res) => {
+  const property = await Property.findById(req.params.id);
+  if (!property) {
+    return res.status(404).json({ message: "Property not found" });
+  }
+  res.json(property);
+};
+
 exports.getPropertiesByHost = async (req, res) => {
-  try {
-    const hostId = req.params.hostId;
+  const properties = await Property.find({ host: req.params.hostId });
+  res.json(properties);
+};
 
-    const properties = await Property.find({ host: hostId }).populate(
-      "host",
-      "name email"
-    );
+exports.updateProperty = async (req, res) => {
+  const data = { ...req.body };
+  delete data._id; // 🔥 IMPORTANT
 
-    res.status(200).json(properties);
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
-  }
+  const property = await Property.findByIdAndUpdate(
+    req.params.id,
+    data,
+    { new: true }
+  );
+
+  res.json(property);
+};
+
+exports.deleteProperty = async (req, res) => {
+  await Property.findByIdAndDelete(req.params.id);
+  res.json({ message: "Property deleted" });
 };

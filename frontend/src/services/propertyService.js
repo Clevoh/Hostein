@@ -1,6 +1,16 @@
-import api from "./api";
+import api from "./api"; // axios instance
 
-export const getProperties = () => api.get("/properties");
-export const createProperty = (data) => api.post("/properties", data);
-export const updateProperty = (id, data) => api.put(`/properties/${id}`, data);
-export const deleteProperty = (id) => api.delete(`/properties/${id}`);
+export const getMyProperties = async (hostId) => {
+  const res = await api.get(`/properties/host/${hostId}`);
+  return res.data; //  array
+};
+
+export const createProperty = async (data) => {
+  const res = await api.post("/properties", data);
+  return res.data; //  created property
+};
+
+export const deleteProperty = async (id) => {
+  const res = await api.delete(`/properties/${id}`);
+  return res.data;
+};
