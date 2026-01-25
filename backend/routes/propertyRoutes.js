@@ -12,9 +12,10 @@ const {
   getPropertiesByHost,
 } = require("../controllers/propertyController");
 
-router.get("/", getAllProperties);
-router.get("/:id", getPropertyById);
+//
 router.get("/host/:hostId", auth, getPropertiesByHost);
+router.get("/:id", getPropertyById);
+router.get("/", getAllProperties);
 
 router.post("/", auth, restrictTo("host", "admin"), createProperty);
 router.put("/:id", auth, restrictTo("host", "admin"), updateProperty);

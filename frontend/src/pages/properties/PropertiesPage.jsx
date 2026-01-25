@@ -1,16 +1,20 @@
 import { useState } from "react";
-import AddButton from "../../components/AddButton";
-import Modal from "../../components/Modal";
-import { Trash2, Pencil, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import { useProperties } from "../../context/PropertyContext";
 import AddPropertyModal from "./AddPropertyModal";
-import { useNavigate } from "react-router-dom";
+import Modal from "../../components/Modal";
+import AddButton from "../../components/AddButton";
 
 export default function PropertiesPage() {
-  const { properties, deleteProperty } = useProperties();
+  const { properties, deleteProperty, loading } = useProperties();
   const [open, setOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const navigate = useNavigate();
+
+  if (loading) {
+    return <p className="text-gray-500">Loading properties…</p>;
+  }
 
   return (
     <div className="space-y-6">
@@ -20,7 +24,7 @@ export default function PropertiesPage() {
         <AddButton label="Add Property" onClick={() => setOpen(true)} />
       </div>
 
-      {/* PROPERTY GRID */}
+      {/* GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {properties.map((p) => (
           <div
@@ -39,19 +43,13 @@ export default function PropertiesPage() {
               <h3 className="font-semibold text-lg">{p.title}</h3>
 
               <p className="text-sm text-gray-500">
-                {p.city}, {p.country}
-              </p>
-
-              <p className="text-sm text-gray-700">
-                {p.pricePerNight
-                  ? `From $${p.pricePerNight} / night`
-                  : "Monthly rental"}
+                {p.city} — {p.address}
               </p>
 
               <div className="flex justify-between items-center mt-4">
                 <button
                   onClick={() =>
-                    navigate(`/dashboard/units?property=${p._id}`)
+                    navigate(`/dashboard/properties/${p._id}/units`)
                   }
                   className="flex items-center gap-1 text-sm text-blue-600"
                 >
@@ -81,9 +79,10 @@ export default function PropertiesPage() {
         )}
       </div>
 
+      {/* ADD MODAL */}
       {open && <AddPropertyModal onClose={() => setOpen(false)} />}
 
-      {/* DELETE CONFIRMATION */}
+      {/* DELETE MODAL */}
       <Modal
         title="Delete Property"
         isOpen={!!deleteId}
@@ -101,8 +100,8 @@ export default function PropertiesPage() {
             Cancel
           </button>
           <button
-            onClick={() => {
-              deleteProperty(deleteId);
+            onClick={async () => {
+              await deleteProperty(deleteId);
               setDeleteId(null);
             }}
             className="px-4 py-2 bg-red-600 text-white rounded-lg"

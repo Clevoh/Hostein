@@ -9,7 +9,7 @@ const tenantSchema = new mongoose.Schema({
     leaseStart: { type: Date },
     leaseEnd: { type: Date },
     rentAmount: { type: Number },
-    status: { type: String, enum:['active', 'inactive'], default: 'active '},
+    status: { type: String, enum:['active', 'inactive'], default: 'active'},
 }, {timestamps: true });
 
 module.exports = mongoose.model('Tenant', tenantSchema );
