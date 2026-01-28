@@ -10,9 +10,13 @@ const {
   updateProperty,
   deleteProperty,
   getPropertiesByHost,
+  getMyProperties, //  NEW IMPORT
 } = require("../controllers/propertyController");
 
-//
+//  NEW: Must come BEFORE "/:id" route to avoid conflicts
+router.get("/mine", auth, getMyProperties);
+
+// Existing routes
 router.get("/host/:hostId", auth, getPropertiesByHost);
 router.get("/:id", getPropertyById);
 router.get("/", getAllProperties);

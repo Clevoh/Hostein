@@ -46,9 +46,21 @@ exports.getPropertiesByHost = async (req, res) => {
   res.json(properties);
 };
 
+//  NEW: Get properties for the currently logged-in user
+exports.getMyProperties = async (req, res) => {
+  try {
+    const hostId = req.user.id || req.user._id;
+    const properties = await Property.find({ host: hostId });
+    res.json(properties);
+  } catch (error) {
+    console.error("GET MY PROPERTIES ERROR:", error);
+    res.status(500).json({ message: error.message || "Server error" });
+  }
+};
+
 exports.updateProperty = async (req, res) => {
   const data = { ...req.body };
-  delete data._id; // 🔥 IMPORTANT
+  delete data._id; //  IMPORTANT
 
   const property = await Property.findByIdAndUpdate(
     req.params.id,
