@@ -1,10 +1,17 @@
 import { Outlet } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardSidebar from "./DashboardSidebar";
 import DashboardTopbar from "./DashboardTopbar";
+import { useProperties } from "../../context/PropertyContext";
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { refreshProperties } = useProperties();
+
+  // Refresh properties when dashboard mounts (after login)
+  useEffect(() => {
+    refreshProperties();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100">

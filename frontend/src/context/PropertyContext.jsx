@@ -1,71 +1,75 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import {
-  getMyProperties,
-  createProperty,
-  deleteProperty as apiDeleteProperty,
-} from "../services/propertyService";
-import { useAuth } from "./AuthContext"; // 👈 IMPORTANT
+import { createContext, useContext, useState, useEffect } from "react";
+import { getMyProperties, deleteProperty as deletePropertyAPI } from "../services/propertyService";
 
 const PropertyContext = createContext();
 
 export function PropertyProvider({ children }) {
-  const { user } = useAuth(); // logged-in user
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 FETCH PROPERTIES ON LOAD
-useEffect(() => {
-  if (!user?._id) {
-    setProperties([]);
-    setLoading(false);
-    return;
-  }
+  // Fetch properties when component mounts
+  useEffect(() => {
+    fetchProperties();
+  }, []);
 
   const fetchProperties = async () => {
     try {
       setLoading(true);
-
-      const res = await getMyProperties(user._id);
-
-      // 🔒 ALWAYS FORCE ARRAY
-      const safeProperties = Array.isArray(res) ? res : [];
-
-      setProperties(safeProperties);
+      const data = await getMyProperties();
+      setProperties(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("LOAD PROPERTIES FAILED", error);
+      console.error("Failed to fetch properties:", error);
       setProperties([]);
     } finally {
       setLoading(false);
     }
   };
 
-  fetchProperties();
-}, [user?._id]);
-
-
-  // ✅ ADD PROPERTY (local state)
-  const addProperty = (property) => {
-    setProperties((prev) => [property, ...prev]);
+  // Add a new property to the list
+  const addProperty = (newProperty) => {
+    setProperties((prev) => [newProperty, ...prev]);
   };
 
-  // ✅ DELETE PROPERTY
-  const deleteProperty = async (id) => {
-    await apiDeleteProperty(id);
-    setProperties((prev) => prev.filter((p) => p._id !== id));
+  // Update an existing property in the list
+  const updatePropertyInContext = (updatedProperty) => {
+    setProperties((prevProperties) =>
+      prevProperties.map((prop) =>
+        prop._id === updatedProperty._id ? updatedProperty : prop
+      )
+    );
+  };
+
+  // Delete a property
+  const deleteProperty = async (propertyId) => {
+    try {
+      await deletePropertyAPI(propertyId);
+      setProperties((prev) => prev.filter((p) => p._id !== propertyId));
+    } catch (error) {
+      console.error("Failed to delete property:", error);
+      throw error;
+    }
+  };
+
+  const value = {
+    properties,
+    loading,
+    addProperty,
+    updatePropertyInContext,
+    deleteProperty,
+    refreshProperties: fetchProperties, // Add this for manual refresh
   };
 
   return (
-    <PropertyContext.Provider
-      value={{
-        properties,
-        loading,
-        addProperty,
-        deleteProperty,
-      }}
-    >
+    <PropertyContext.Provider value={value}>
       {children}
     </PropertyContext.Provider>
   );
 }
 
-export const useProperties = () => useContext(PropertyContext);
+export function useProperties() {
+  const context = useContext(PropertyContext);
+  if (!context) {
+    throw new Error("useProperties must be used within a PropertyProvider");
+  }
+  return context;
+}

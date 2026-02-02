@@ -11,7 +11,8 @@ import RequireRole from "./components/auth/RequireRole";
 import DashboardLayout from "./layouts/dashboard/DashboardLayout";
 import Overview from "./pages/dashboard/Overview";
 import PropertiesPage from "./pages/properties/PropertiesPage";
-import UnitsPage from "./pages/units/UnitsPage";
+import AllUnitsPage from "./pages/units/AllUnitsPage";
+import PropertyUnitsPage from "./pages/units/PropertyUnitsPage";
 import TenantsPage from "./pages/tenants/TenantsPage";
 
 /* CLIENT */
@@ -44,12 +45,16 @@ export default function AppRoutes() {
           {/* PROPERTIES */}
           <Route path="properties" element={<PropertiesPage />} />
 
-          {/*  UNITS — PROPERTY REQUIRED */}
+          {/* UNITS — ALL UNITS VIEW (Shows all units across all properties) */}
+          <Route path="units" element={<AllUnitsPage />} />
+
+          {/* UNITS — PROPERTY-SPECIFIC (For managing units within a specific property) */}
           <Route
             path="properties/:propertyId/units"
-            element={<UnitsPage />}
+            element={<PropertyUnitsPage />}
           />
 
+          {/* TENANTS */}
           <Route path="tenants" element={<TenantsPage />} />
         </Route>
       </Route>

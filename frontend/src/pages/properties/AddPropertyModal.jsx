@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { X, Upload, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { createProperty } from "../../services/propertyService";
 import { useProperties } from "../../context/PropertyContext";
@@ -6,6 +6,8 @@ import { useProperties } from "../../context/PropertyContext";
 export default function AddPropertyModal({ onClose }) {
   const { addProperty } = useProperties();
   const [loading, setLoading] = useState(false);
+  const [selectedImages, setSelectedImages] = useState([]); // For preview
+  const [imageFiles, setImageFiles] = useState([]); // Actual files
 
   const [form, setForm] = useState({
     title: "",
@@ -16,8 +18,30 @@ export default function AddPropertyModal({ onClose }) {
     rentType: "monthly",
     pricePerNight: "",
     description: "",
-    images: [],
   });
+
+  // Handle image selection
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    
+    if (files.length + imageFiles.length > 5) {
+      alert("Maximum 5 images allowed");
+      return;
+    }
+
+    // Store actual files
+    setImageFiles([...imageFiles, ...files]);
+
+    // Create preview URLs
+    const previews = files.map(file => URL.createObjectURL(file));
+    setSelectedImages([...selectedImages, ...previews]);
+  };
+
+  // Remove image
+  const removeImage = (index) => {
+    setSelectedImages(selectedImages.filter((_, i) => i !== index));
+    setImageFiles(imageFiles.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async () => {
     if (!form.title || !form.address || !form.city) {
@@ -28,22 +52,26 @@ export default function AddPropertyModal({ onClose }) {
     try {
       setLoading(true);
 
-      const payload = {
-        title: form.title,
-        address: form.address,
-        city: form.city,
-        country: form.country,
-        category: form.category,
-        rentType: form.rentType,
-        description: form.description,
-        images: [],
-      };
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append("title", form.title);
+      formData.append("address", form.address);
+      formData.append("city", form.city);
+      formData.append("country", form.country);
+      formData.append("category", form.category);
+      formData.append("rentType", form.rentType);
+      formData.append("description", form.description);
 
       if (form.rentType === "daily") {
-        payload.pricePerNight = Number(form.pricePerNight);
+        formData.append("pricePerNight", Number(form.pricePerNight));
       }
 
-      const createdProperty = await createProperty(payload);
+      // Append all images
+      imageFiles.forEach((file) => {
+        formData.append("images", file);
+      });
+
+      const createdProperty = await createProperty(formData);
 
       addProperty(createdProperty); // update context
       onClose();
@@ -57,7 +85,7 @@ export default function AddPropertyModal({ onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white w-full max-w-lg rounded-xl p-6 space-y-4">
+      <div className="bg-white w-full max-w-lg rounded-xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-bold">Add Property</h2>
           <button onClick={onClose}>
@@ -125,6 +153,49 @@ export default function AddPropertyModal({ onClose }) {
             setForm({ ...form, description: e.target.value })
           }
         />
+
+        {/* 🆕 IMAGE UPLOAD SECTION */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Property Images (Max 5)
+          </label>
+          
+          {/* Upload Button */}
+          <label className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition">
+            <Upload size={20} className="text-gray-500" />
+            <span className="text-sm text-gray-600">
+              {imageFiles.length > 0 ? `${imageFiles.length} image(s) selected` : "Choose images"}
+            </span>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+          </label>
+
+          {/* Image Previews */}
+          {selectedImages.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              {selectedImages.map((preview, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={preview}
+                    alt={`Preview ${index + 1}`}
+                    className="h-24 w-full object-cover rounded-lg"
+                  />
+                  <button
+                    onClick={() => removeImage(index)}
+                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <button
           onClick={handleSubmit}

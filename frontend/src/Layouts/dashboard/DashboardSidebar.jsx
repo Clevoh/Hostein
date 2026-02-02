@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Home, Building2, Users, LogOut, X } from "lucide-react";
+import { Home, Building2, Grid3x3, Users, LogOut, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
 export default function DashboardSidebar({ open, onClose }) {
@@ -42,6 +42,7 @@ export default function DashboardSidebar({ open, onClose }) {
         <nav className="flex-1 p-4 space-y-2">
           <NavLink
             to="/dashboard"
+            end
             onClick={onClose}
             className={({ isActive }) =>
               `${navItem} ${isActive ? activeItem : ""}`
@@ -58,6 +59,16 @@ export default function DashboardSidebar({ open, onClose }) {
             }
           >
             <Building2 size={18} /> Properties
+          </NavLink>
+
+          <NavLink
+            to="/dashboard/units"
+            onClick={onClose}
+            className={({ isActive }) =>
+              `${navItem} ${isActive ? activeItem : ""}`
+            }
+          >
+            <Grid3x3 size={18} /> Units
           </NavLink>
 
           <NavLink

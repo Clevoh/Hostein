@@ -33,6 +33,7 @@ export default function HosteinSearchBarAdvanced() {
     { city: "Dar es Salaam, Tanzania" },
     { city: "Arusha, Tanzania" },
     { city: "Zanzibar, Tanzania" },
+    { city: "Bujumbura, Burundi" },
   ];
 
   // Close all popups when clicked outside

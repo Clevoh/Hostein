@@ -30,7 +30,7 @@ export default function Signup() {
     try {
       setLoading(true);
 
-      await api.post("/auth/register", {
+      await api.post("/users/register", {
         name: form.name,
         email: form.email,
         password: form.password,

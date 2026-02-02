@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -21,20 +23,26 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await api.post("/auth/login", form);
+      const res = await api.post("/users/login", form);
+      const { token, _id, name, email, role } = res.data;
 
-      const { token, user } = res.data;
+      // Construct user object
+      const user = { _id, name, email, role, token };
 
-      // Store auth
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      // Use AuthContext login
+      login(user);
 
       // Role-based redirect
-      if (user.role === "host") navigate("/dashboard");
-      else if (user.role === "admin") navigate("/admin");
-      else navigate("/client");
+      if (role === "host" || role === "landlord") {
+        navigate("/dashboard", { replace: true });
+      } else if (role === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/client", { replace: true });
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      console.error("Login error:", err);
+      setError(err.response?.data?.message || "Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -79,6 +87,13 @@ export default function Login() {
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
+
+        <p className="mt-4 text-center text-sm text-gray-600">
+          Don't have an account?{" "}
+          <a href="/signup" className="text-blue-600 hover:underline">
+            Sign up
+          </a>
+        </p>
       </div>
     </div>
   );
