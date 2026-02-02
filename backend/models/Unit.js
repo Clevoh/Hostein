@@ -57,6 +57,11 @@ const unitSchema = new mongoose.Schema(
       ref: "Tenant",
       default: null,
     },
+
+    image: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );

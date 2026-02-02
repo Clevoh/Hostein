@@ -221,6 +221,45 @@ exports.assignTenantToUnit = async (req, res) => {
 };
 
 /* ===========================
+   DELETE UNIT IMAGE
+=========================== */
+exports.deleteUnitImage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { imageUrl } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid unit ID" });
+    }
+
+    if (!imageUrl) {
+      return res.status(400).json({ message: "Image URL is required" });
+    }
+
+    const unit = await Unit.findById(id);
+    if (!unit) {
+      return res.status(404).json({ message: "Unit not found" });
+    }
+
+    if (!unit.images || !unit.images.includes(imageUrl)) {
+      return res.status(404).json({ message: "Image not found on unit" });
+    }
+
+    unit.images = unit.images.filter(img => img !== imageUrl);
+    await unit.save();
+
+    res.status(200).json({
+      message: "Image removed successfully",
+      unit,
+    });
+  } catch (error) {
+    console.error("DELETE UNIT IMAGE ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+/* ===========================
    VACATE UNIT
 =========================== */
 exports.vacateUnit = async (req, res) => {

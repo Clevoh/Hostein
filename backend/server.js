@@ -1,20 +1,31 @@
-// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const dotenv = require("dotenv");
-
-
-// Load environment variables
-dotenv.config();
+const path = require("path");
+const fs = require("fs");
+const dns = require("dns");
+require("dotenv").config();
 
 const app = express();
 
-// Middleware
-app.use(express.json());
-app.use(cors());
+// 🔧 CRITICAL: Fix DNS resolution issue - Force IPv4
+dns.setDefaultResultOrder('ipv4first');
 
-//  Import routes
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// 🆕 Serve static files from uploads folder
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// 🆕 Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, "uploads", "properties");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log("✅ Created uploads/properties directory");
+}
+
+// Import routes
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const propertyRoutes = require("./routes/propertyRoutes");
@@ -22,7 +33,7 @@ const tenantRoutes = require("./routes/tenantRoutes");
 const unitRoute = require("./routes/unitRoute");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 
-//  Use routes
+// Use routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/properties", propertyRoutes);
@@ -32,13 +43,33 @@ app.use("/api/dashboard", dashboardRoutes);
 
 const PORT = process.env.PORT || 5000;
 
-//  Connect to MongoDB and start the server
+// Connect to MongoDB and start server
 (async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log(" MongoDB connected");
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+    console.log("🔍 Connecting to MongoDB...");
+    
+    await mongoose.connect(process.env.MONGO_URI, {
+      family: 4, // Force IPv4
+      serverSelectionTimeoutMS: 10000,
+    });
+    
+    console.log("✅ MongoDB connected successfully");
+    console.log("📊 Database:", mongoose.connection.name);
+    
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📍 API: http://localhost:${PORT}/api`);
+    });
   } catch (err) {
-    console.error(" MongoDB connection error:", err.message);
+    console.error("❌ MongoDB connection failed:", err.message);
+    console.error("\n🔧 This is a network/firewall issue. Try:");
+    console.error("   1. Connect via mobile hotspot");
+    console.error("   2. Use a VPN");
+    console.error("   3. Contact your network administrator\n");
+    
+    // Start server anyway (API will work, but no database)
+    app.listen(PORT, () => {
+      console.log(`⚠️  Server running on port ${PORT} WITHOUT database`);
+    });
   }
 })();

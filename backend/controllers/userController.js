@@ -1,74 +1,125 @@
+// backend/controllers/userController.js
 const User = require("../models/User");
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
-// Register a new user
+// Generate JWT Token
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: "30d",
+  });
+};
+
+// @desc    Register new user
+// @route   POST /api/users/register
+// @access  Public
 exports.registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    // Check if user exists
+    const userExists = await User.findOne({ email });
+    if (userExists) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // Create user
-    const newUser = await User.create({
+    const user = await User.create({
       name,
       email,
-      password: hashedPassword,
-      role,
+      password,
+      role: role || "client",
     });
 
-    res.status(201).json({ message: "User registered successfully", user: newUser });
+    if (user) {
+      res.status(201).json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        token: generateToken(user._id),
+      });
+    } else {
+      res.status(400).json({ message: "Invalid user data" });
+    }
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("REGISTER ERROR:", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
-// Login user
+// @desc    Auth user & get token
+// @route   POST /api/users/login
+// @access  Public
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check user
+    // Check for user email
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
-    // Compare password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
-
-    // Create JWT
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-
-    res.status(200).json({
-      message: "Login successful",
-      token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
-    });
+    if (user && (await user.matchPassword(password))) {
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        token: generateToken(user._id),
+      });
+    } else {
+      res.status(401).json({ message: "Invalid email or password" });
+    }
   } catch (error) {
-    res.status(500).json({ message: "Error logging in", error });
+    console.error("LOGIN ERROR:", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
-// Get user profile
-exports.getUserProfile = async (req, res) => {
+// @desc    Get user profile
+// @route   GET /api/users/profile
+// @access  Private
+exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const user = await User.findById(req.user._id).select("-password");
 
-    res.status(200).json(user);
+    if (user) {
+      res.json(user);
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
   } catch (error) {
-    res.status(500).json({ message: "Error fetching user profile", error });
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+exports.updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+      user.name = req.body.name || user.name;
+      user.email = req.body.email || user.email;
+
+      if (req.body.password) {
+        user.password = req.body.password;
+      }
+
+      const updatedUser = await user.save();
+
+      res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        token: generateToken(updatedUser._id),
+      });
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
