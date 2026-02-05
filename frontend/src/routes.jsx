@@ -17,10 +17,10 @@ import TenantsPage from "./pages/tenants/TenantsPage";
 
 /* CLIENT */
 import ClientLayout from "./layouts/client/ClientLayout";
-import ClientDashboardHome from "./pages/client/ClientDashboardHome";
-import ClientBookings from "./pages/client/ClientBookings";
-import ClientServices from "./pages/client/ClientServices";
-import ClientProfile from "./pages/client/ClientProfile";
+import ClientDashboardHome from "./pages/client/ClientDashboardHome_API";
+import ClientBookings from "./pages/client/ClientBookings_API";
+import ClientServices from "./pages/client/ClientServices_API";
+import ClientProfile from "./pages/client/ClientProfile_API";
 
 /* ADMIN */
 import AdminLayout from "./layouts/admin/AdminLayout";

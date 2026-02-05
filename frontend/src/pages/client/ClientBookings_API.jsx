@@ -1,5 +1,5 @@
 // src/pages/client/ClientBookings.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Calendar,
@@ -11,67 +11,41 @@ import {
   Home,
   CheckCircle,
   XCircle,
-  AlertCircle,
 } from "lucide-react";
+import { getMyBookings, cancelBooking } from "../../services/bookingService";
 
 export default function ClientBookings() {
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [bookings] = useState([
-    {
-      id: 1,
-      property: "Modern Studio Apartment",
-      location: "Downtown, City Center",
-      image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600",
-      checkIn: "Feb 15, 2026",
-      checkOut: "Feb 20, 2026",
-      nights: 5,
-      amount: 850,
-      status: "confirmed",
-      bookingDate: "Jan 25, 2026",
-      propertyType: "Studio",
-    },
-    {
-      id: 2,
-      property: "Luxury Beach House",
-      location: "Coastal Area, Beach Front",
-      image: "https://images.unsplash.com/photo-1499696010180-025ef6e1a8f9?w=600",
-      checkIn: "Mar 10, 2026",
-      checkOut: "Mar 15, 2026",
-      nights: 5,
-      amount: 2400,
-      status: "pending",
-      bookingDate: "Jan 28, 2026",
-      propertyType: "House",
-    },
-    {
-      id: 3,
-      property: "Cozy City Apartment",
-      location: "Midtown, Arts District",
-      image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600",
-      checkIn: "Jan 10, 2026",
-      checkOut: "Jan 15, 2026",
-      nights: 5,
-      amount: 650,
-      status: "completed",
-      bookingDate: "Dec 20, 2025",
-      propertyType: "Apartment",
-    },
-    {
-      id: 4,
-      property: "Urban Loft Space",
-      location: "Industrial District",
-      image: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=600",
-      checkIn: "Dec 5, 2025",
-      checkOut: "Dec 8, 2025",
-      nights: 3,
-      amount: 450,
-      status: "cancelled",
-      bookingDate: "Nov 15, 2025",
-      propertyType: "Loft",
-    },
-  ]);
+  useEffect(() => {
+    loadBookings();
+  }, []);
+
+  const loadBookings = async () => {
+    try {
+      setLoading(true);
+      const data = await getMyBookings();
+      setBookings(data);
+    } catch (error) {
+      console.error("Failed to load bookings:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelBooking = async (bookingId) => {
+    if (!window.confirm("Are you sure you want to cancel this booking?")) return;
+
+    try {
+      await cancelBooking(bookingId);
+      await loadBookings(); // Reload bookings
+    } catch (error) {
+      alert("Failed to cancel booking: " + (error.response?.data?.message || error.message));
+    }
+  };
 
   const getStatusBadge = (status) => {
     const badges = {
@@ -97,7 +71,7 @@ export default function ClientBookings() {
       },
     };
 
-    const badge = badges[status];
+    const badge = badges[status] || badges.pending;
     const Icon = badge.icon;
 
     return (
@@ -110,10 +84,25 @@ export default function ClientBookings() {
     );
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return "https://via.placeholder.com/600";
+    if (imagePath.startsWith("http")) return imagePath;
+    return `http://localhost:5000${imagePath}`;
+  };
+
   const filteredBookings = bookings.filter((booking) => {
     const matchesSearch =
-      booking.property.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.location.toLowerCase().includes(searchQuery.toLowerCase());
+      booking.property?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking.property?.city?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesTab =
       activeTab === "all" ||
@@ -142,6 +131,17 @@ export default function ClientBookings() {
       ).length,
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading bookings...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -223,15 +223,15 @@ export default function ClientBookings() {
         <div className="space-y-4">
           {filteredBookings.map((booking) => (
             <div
-              key={booking.id}
+              key={booking._id}
               className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-all overflow-hidden"
             >
               <div className="flex flex-col md:flex-row">
                 {/* IMAGE */}
                 <div className="md:w-64 h-48 md:h-auto">
                   <img
-                    src={booking.image}
-                    alt={booking.property}
+                    src={getImageUrl(booking.property?.images?.[0])}
+                    alt={booking.property?.title}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -241,11 +241,11 @@ export default function ClientBookings() {
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                        {booking.property}
+                        {booking.property?.title || "Property"}
                       </h3>
                       <p className="text-gray-600 flex items-center gap-1">
                         <MapPin size={16} />
-                        {booking.location}
+                        {booking.property?.city || "Location"}
                       </p>
                     </div>
                     {getStatusBadge(booking.status)}
@@ -256,7 +256,7 @@ export default function ClientBookings() {
                       <p className="text-xs text-gray-500 mb-1">Check-in</p>
                       <p className="font-medium text-gray-900 flex items-center gap-1">
                         <Calendar size={14} className="text-gray-400" />
-                        {booking.checkIn}
+                        {formatDate(booking.checkIn)}
                       </p>
                     </div>
 
@@ -264,7 +264,7 @@ export default function ClientBookings() {
                       <p className="text-xs text-gray-500 mb-1">Check-out</p>
                       <p className="font-medium text-gray-900 flex items-center gap-1">
                         <Calendar size={14} className="text-gray-400" />
-                        {booking.checkOut}
+                        {formatDate(booking.checkOut)}
                       </p>
                     </div>
 
@@ -287,12 +287,16 @@ export default function ClientBookings() {
 
                   <div className="flex items-center gap-3 mt-4 pt-4 border-t">
                     <span className="text-sm text-gray-500">
-                      Booked on {booking.bookingDate}
+                      Booked on {formatDate(booking.bookingDate || booking.createdAt)}
                     </span>
-                    <span className="text-sm text-gray-300">•</span>
-                    <span className="text-sm text-gray-500">
-                      {booking.propertyType}
-                    </span>
+                    {booking.unit && (
+                      <>
+                        <span className="text-sm text-gray-300">•</span>
+                        <span className="text-sm text-gray-500">
+                          Unit {booking.unit.unitNumber}
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   {/* ACTIONS */}
@@ -305,8 +309,11 @@ export default function ClientBookings() {
                         Modify Booking
                       </button>
                     )}
-                    {booking.status === "pending" && (
-                      <button className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium">
+                    {(booking.status === "pending" || booking.status === "confirmed") && (
+                      <button
+                        onClick={() => handleCancelBooking(booking._id)}
+                        className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium"
+                      >
                         Cancel Booking
                       </button>
                     )}

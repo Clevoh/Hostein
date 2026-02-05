@@ -1,5 +1,5 @@
 // src/pages/client/ClientProfile.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   User,
   Mail,
@@ -14,19 +14,27 @@ import {
   Save,
   X,
 } from "lucide-react";
+import {
+  getClientProfile,
+  updateClientProfile,
+  changePassword,
+} from "../../services/clientService";
+import { getBookingStats } from "../../services/bookingService";
+import { getMyServices } from "../../services/serviceService";
 
 export default function ClientProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [showPasswords, setShowPasswords] = useState(false);
-
+  const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
 
   const [profile, setProfile] = useState({
-    name: "Clevo Lih",
-    email: "clevolih@gmail.com",
-    phone: "+123 456 789",
-    address: "123 Main Street, City",
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
     avatar: null,
   });
 
@@ -35,6 +43,58 @@ export default function ClientProfile() {
     newPass: "",
     confirm: "",
   });
+
+  const [stats, setStats] = useState({
+    totalBookings: 0,
+    activeServices: 0,
+    memberSince: "Jan 2026",
+  });
+
+  useEffect(() => {
+    loadProfile();
+    loadStats();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      const data = await getClientProfile();
+      setProfile({
+        name: data.name || "",
+        email: data.email || "",
+        phone: data.phone || "",
+        address: data.address || "",
+        avatar: data.avatar ? `http://localhost:5000${data.avatar}` : null,
+      });
+    } catch (error) {
+      console.error("Failed to load profile:", error);
+      setAlert({
+        type: "error",
+        message: "Failed to load profile data",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const [bookingStatsData, servicesData] = await Promise.all([
+        getBookingStats(),
+        getMyServices(),
+      ]);
+
+      setStats({
+        totalBookings: bookingStatsData.totalBookings || 0,
+        activeServices: servicesData.filter(
+          (s) => s.status === "scheduled" || s.status === "in-progress"
+        ).length,
+        memberSince: "Jan 2026", // This should come from user.createdAt
+      });
+    } catch (error) {
+      console.error("Failed to load stats:", error);
+    }
+  };
 
   const handleProfileChange = (e) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
@@ -47,11 +107,11 @@ export default function ClientProfile() {
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setAvatarFile(file);
       setProfile({ ...profile, avatar: URL.createObjectURL(file) });
     }
   };
 
-  /* PASSWORD STRENGTH */
   const passwordStrength = () => {
     const p = passwords.newPass;
     if (p.length === 0) return { value: 0, label: "", color: "" };
@@ -64,7 +124,7 @@ export default function ClientProfile() {
     return { value: 50, label: "Medium", color: "bg-yellow-500" };
   };
 
-  const handleUpdatePassword = () => {
+  const handleUpdatePassword = async () => {
     if (!passwords.current || !passwords.newPass || !passwords.confirm) {
       setAlert({
         type: "error",
@@ -86,21 +146,69 @@ export default function ClientProfile() {
       return;
     }
 
-    setAlert({ type: "success", message: "Password updated successfully!" });
-    setPasswords({ current: "", newPass: "", confirm: "" });
-    setShowPasswordForm(false);
+    try {
+      await changePassword({
+        currentPassword: passwords.current,
+        newPassword: passwords.newPass,
+      });
 
-    // Auto-hide alert after 3 seconds
+      setAlert({ type: "success", message: "Password updated successfully!" });
+      setPasswords({ current: "", newPass: "", confirm: "" });
+      setShowPasswordForm(false);
+    } catch (error) {
+      setAlert({
+        type: "error",
+        message: error.response?.data?.message || "Failed to update password",
+      });
+    }
+
     setTimeout(() => setAlert(null), 3000);
   };
 
-  const handleSaveProfile = () => {
-    setIsEditing(false);
-    setAlert({ type: "success", message: "Profile updated successfully!" });
+  const handleSaveProfile = async () => {
+    try {
+      const profileData = {
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone,
+        address: profile.address,
+      };
+
+      // Add avatar file if changed
+      if (avatarFile) {
+        profileData.avatar = avatarFile;
+      }
+
+      await updateClientProfile(profileData);
+
+      setIsEditing(false);
+      setAvatarFile(null);
+      setAlert({ type: "success", message: "Profile updated successfully!" });
+
+      // Reload profile to get updated data
+      await loadProfile();
+    } catch (error) {
+      setAlert({
+        type: "error",
+        message: error.response?.data?.message || "Failed to update profile",
+      });
+    }
+
     setTimeout(() => setAlert(null), 3000);
   };
 
   const strength = passwordStrength();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -150,20 +258,22 @@ export default function ClientProfile() {
                 alt="Profile"
                 className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
               />
-              <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                <Camera className="text-white" size={24} />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarChange}
-                  className="hidden"
-                />
-              </label>
+              {isEditing && (
+                <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  <Camera className="text-white" size={24} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                </label>
+              )}
             </div>
 
             <div className="flex-1 pb-4">
               <h2 className="text-2xl font-bold text-gray-900">
-                {profile.name}
+                {profile.name || "User"}
               </h2>
               <p className="text-gray-600 flex items-center gap-1 mt-1">
                 <Mail size={16} />
@@ -246,7 +356,11 @@ export default function ClientProfile() {
           {isEditing && (
             <div className="flex gap-3 justify-end mt-6 pt-6 border-t">
               <button
-                onClick={() => setIsEditing(false)}
+                onClick={() => {
+                  setIsEditing(false);
+                  setAvatarFile(null);
+                  loadProfile(); // Reset changes
+                }}
                 className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
               >
                 Cancel
@@ -439,7 +553,9 @@ export default function ClientProfile() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Bookings</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">3</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">
+                {stats.totalBookings}
+              </p>
             </div>
             <div className="p-3 bg-blue-100 rounded-lg">
               <CheckCircle className="text-blue-600" size={24} />
@@ -451,7 +567,9 @@ export default function ClientProfile() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Active Services</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">2</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">
+                {stats.activeServices}
+              </p>
             </div>
             <div className="p-3 bg-green-100 rounded-lg">
               <CheckCircle className="text-green-600" size={24} />
@@ -463,7 +581,9 @@ export default function ClientProfile() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Member Since</p>
-              <p className="text-xl font-bold text-gray-900 mt-1">Jan 2026</p>
+              <p className="text-xl font-bold text-gray-900 mt-1">
+                {stats.memberSince}
+              </p>
             </div>
             <div className="p-3 bg-purple-100 rounded-lg">
               <User className="text-purple-600" size={24} />

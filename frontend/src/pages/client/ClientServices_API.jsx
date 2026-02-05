@@ -1,5 +1,5 @@
 // src/pages/client/ClientServices.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Wrench,
   Droplet,
@@ -14,11 +14,21 @@ import {
   Plus,
 } from "lucide-react";
 import Modal from "../../components/Modal";
+import {
+  getMyServices,
+  getAvailableServices,
+  bookService,
+  cancelServiceBooking,
+  rescheduleService,
+} from "../../services/serviceService";
 
 export default function ClientServices() {
   const [activeTab, setActiveTab] = useState("all");
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [myServices, setMyServices] = useState([]);
+  const [availableServices, setAvailableServices] = useState([]);
 
   const [bookingForm, setBookingForm] = useState({
     date: "",
@@ -26,101 +36,43 @@ export default function ClientServices() {
     notes: "",
   });
 
-  const [myServices] = useState([
-    {
-      id: 1,
-      name: "AC Repair",
-      provider: "CoolTech Solutions",
-      status: "scheduled",
-      scheduledDate: "Feb 15, 2026",
-      scheduledTime: "10:00 AM",
-      price: 120,
-      category: "maintenance",
-    },
-    {
-      id: 2,
-      name: "Deep Cleaning",
-      provider: "Sparkle Clean Co",
-      status: "in-progress",
-      scheduledDate: "Feb 10, 2026",
-      scheduledTime: "2:00 PM",
-      price: 85,
-      category: "cleaning",
-    },
-    {
-      id: 3,
-      name: "Plumbing Repair",
-      provider: "QuickFix Plumbing",
-      status: "completed",
-      scheduledDate: "Jan 28, 2026",
-      scheduledTime: "11:00 AM",
-      price: 95,
-      category: "maintenance",
-    },
-  ]);
+  // Icon mapping for available services
+  const iconMap = {
+    "AC Maintenance": Wind,
+    "Plumbing Service": Droplet,
+    "Electrical Repair": Zap,
+    "Deep Cleaning": Sparkles,
+    "Regular Cleaning": Sparkles,
+    "Move-in/Move-out": Package,
+  };
 
-  const [availableServices] = useState([
-    {
-      id: 1,
-      name: "AC Maintenance",
-      description: "Regular AC servicing and cleaning",
-      category: "maintenance",
-      icon: Wind,
-      price: 80,
-      duration: "2 hours",
-      rating: 4.8,
-    },
-    {
-      id: 2,
-      name: "Plumbing Service",
-      description: "Fix leaks, unclog drains, repair pipes",
-      category: "maintenance",
-      icon: Droplet,
-      price: 100,
-      duration: "1-3 hours",
-      rating: 4.7,
-    },
-    {
-      id: 3,
-      name: "Electrical Repair",
-      description: "Fix wiring, outlets, and lighting issues",
-      category: "maintenance",
-      icon: Zap,
-      price: 90,
-      duration: "1-2 hours",
-      rating: 4.9,
-    },
-    {
-      id: 4,
-      name: "Deep Cleaning",
-      description: "Thorough cleaning of entire property",
-      category: "cleaning",
-      icon: Sparkles,
-      price: 150,
-      duration: "3-4 hours",
-      rating: 4.6,
-    },
-    {
-      id: 5,
-      name: "Regular Cleaning",
-      description: "Weekly or bi-weekly cleaning service",
-      category: "cleaning",
-      icon: Sparkles,
-      price: 60,
-      duration: "2 hours",
-      rating: 4.5,
-    },
-    {
-      id: 6,
-      name: "Move-in/Move-out",
-      description: "Complete property preparation service",
-      category: "other",
-      icon: Package,
-      price: 200,
-      duration: "4-5 hours",
-      rating: 4.8,
-    },
-  ]);
+  useEffect(() => {
+    loadServices();
+  }, []);
+
+  const loadServices = async () => {
+    try {
+      setLoading(true);
+      const [myServicesData, availableServicesData] = await Promise.all([
+        getMyServices(),
+        getAvailableServices(),
+      ]);
+
+      setMyServices(myServicesData);
+      
+      // Add icons to available services
+      const servicesWithIcons = availableServicesData.map((service) => ({
+        ...service,
+        icon: iconMap[service.name] || Wrench,
+      }));
+      
+      setAvailableServices(servicesWithIcons);
+    } catch (error) {
+      console.error("Failed to load services:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status) => {
     const badges = {
@@ -136,9 +88,13 @@ export default function ClientServices() {
         text: "Completed",
         className: "bg-green-100 text-green-700 border-green-200",
       },
+      cancelled: {
+        text: "Cancelled",
+        className: "bg-red-100 text-red-700 border-red-200",
+      },
     };
 
-    const badge = badges[status];
+    const badge = badges[status] || badges.scheduled;
     return (
       <span
         className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${badge.className}`}
@@ -153,27 +109,83 @@ export default function ClientServices() {
     setIsBookingModalOpen(true);
   };
 
-  const handleSubmitBooking = () => {
+  const handleSubmitBooking = async () => {
     if (!bookingForm.date || !bookingForm.time) {
       alert("Please select date and time");
       return;
     }
 
-    alert(`Service booked successfully!\nDate: ${bookingForm.date}\nTime: ${bookingForm.time}`);
-    setIsBookingModalOpen(false);
-    setBookingForm({ date: "", time: "", notes: "" });
+    try {
+      await bookService({
+        serviceType: selectedService.name,
+        provider: "Default Provider",
+        description: selectedService.description,
+        scheduledDate: bookingForm.date,
+        scheduledTime: bookingForm.time,
+        price: selectedService.price,
+        duration: selectedService.duration,
+        category: selectedService.category,
+        notes: bookingForm.notes,
+      });
+
+      alert("Service booked successfully!");
+      setIsBookingModalOpen(false);
+      setBookingForm({ date: "", time: "", notes: "" });
+      loadServices(); // Reload services
+    } catch (error) {
+      alert("Failed to book service: " + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const handleCancelService = async (serviceId) => {
+    if (!window.confirm("Are you sure you want to cancel this service?")) return;
+
+    try {
+      await cancelServiceBooking(serviceId);
+      await loadServices(); // Reload services
+    } catch (error) {
+      alert("Failed to cancel service: " + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
   const tabs = [
-    { id: "all", label: "All Services" },
-    { id: "scheduled", label: "Scheduled" },
-    { id: "completed", label: "Completed" },
+    { id: "all", label: "All Services", count: myServices.length },
+    {
+      id: "scheduled",
+      label: "Scheduled",
+      count: myServices.filter((s) => s.status === "scheduled").length,
+    },
+    {
+      id: "completed",
+      label: "Completed",
+      count: myServices.filter((s) => s.status === "completed").length,
+    },
   ];
 
   const filteredServices = myServices.filter((service) => {
     if (activeTab === "all") return true;
     return service.status === activeTab;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading services...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-7xl">
@@ -207,6 +219,15 @@ export default function ClientServices() {
                 }`}
               >
                 {tab.label}
+                <span
+                  className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                    activeTab === tab.id
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {tab.count}
+                </span>
                 {activeTab === tab.id && (
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
                 )}
@@ -221,13 +242,13 @@ export default function ClientServices() {
             <div className="space-y-4">
               {filteredServices.map((service) => (
                 <div
-                  key={service.id}
+                  key={service._id}
                   className="p-4 border rounded-lg hover:shadow-md transition-all"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="font-semibold text-gray-900 text-lg">
-                        {service.name}
+                        {service.serviceType}
                       </h3>
                       <p className="text-sm text-gray-600 mt-1">
                         Provider: {service.provider}
@@ -241,7 +262,7 @@ export default function ClientServices() {
                       <p className="text-xs text-gray-500 mb-1">Date</p>
                       <p className="font-medium text-gray-900 flex items-center gap-1">
                         <Calendar size={14} className="text-gray-400" />
-                        {service.scheduledDate}
+                        {formatDate(service.scheduledDate)}
                       </p>
                     </div>
 
@@ -267,9 +288,17 @@ export default function ClientServices() {
                       View Details
                     </button>
                     {service.status === "scheduled" && (
-                      <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
-                        Reschedule
-                      </button>
+                      <>
+                        <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                          Reschedule
+                        </button>
+                        <button
+                          onClick={() => handleCancelService(service._id)}
+                          className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium"
+                        >
+                          Cancel
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -439,6 +468,7 @@ export default function ClientServices() {
               onChange={(e) =>
                 setBookingForm({ ...bookingForm, date: e.target.value })
               }
+              min={new Date().toISOString().split("T")[0]}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             />
           </div>
