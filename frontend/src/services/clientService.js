@@ -36,7 +36,7 @@ export const updateClientProfile = async (profileData) => {
 
 // Change password
 export const changePassword = async (passwordData) => {
-  if (!passwordData || typeof profileData !== 'object') {
+  if (!passwordData || typeof passwordData !== 'object') {
     throw new Error('Invalid password data');
   }
 
