@@ -31,7 +31,7 @@ export default function DashboardCharts() {
       <div className="bg-white p-6 rounded-xl border shadow-sm">
         <h3 className="font-semibold mb-4">Monthly Revenue</h3>
 
-        {/* 🔥 FIX: explicit height wrapper */}
+        {/* FIX: explicit height wrapper */}
         <div className="w-full h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={revenueData}>
@@ -52,7 +52,7 @@ export default function DashboardCharts() {
       <div className="bg-white p-6 rounded-xl border shadow-sm">
         <h3 className="font-semibold mb-4">Occupancy Rate</h3>
 
-        {/* 🔥 FIX: explicit height wrapper */}
+        {/*  FIX: explicit height wrapper */}
         <div className="w-full h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
