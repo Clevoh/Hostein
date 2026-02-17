@@ -26,6 +26,26 @@ const propertySchema = new mongoose.Schema(
     images: [String],
     amenities: [String],
     isAvailable: { type: Boolean, default: true },
+
+    //  HOSTEL FIELDS
+    hostelType: {
+      type: String,
+      enum: ["accommodation_only", "meals_included", "mixed"],
+      default: "accommodation_only",
+    },
+
+    mealPlans: [
+      {
+        name: {
+          type: String,
+          enum: ["breakfast", "lunch", "dinner", "half_board", "full_board"],
+        },
+        priceDaily: { type: Number, default: 0 },
+        priceMonthly: { type: Number, default: 0 },
+        description: { type: String },
+        isIncluded: { type: Boolean, default: false },
+      },
+    ],
   },
   { timestamps: true }
 );

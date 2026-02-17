@@ -40,6 +40,23 @@ const unitSchema = new mongoose.Schema(
       min: [0, "Rent cannot be negative"],
     },
 
+    // HOSTEL MEAL PLAN FIELDS
+    mealPlanType: {
+      type: String,
+      enum: ["none", "breakfast", "lunch", "dinner", "half_board", "full_board"],
+      default: "none",
+    },
+
+    mealPlanCost: {
+      type: Number,
+      default: 0,
+    },
+
+    totalMonthlyCost: {
+      type: Number,
+      default: 0,
+    },
+
     property: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Property",
@@ -65,6 +82,12 @@ const unitSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// 🆕 Auto-calculate total monthly cost before saving
+unitSchema.pre("save", function (next) {
+  this.totalMonthlyCost = (this.rentAmount || 0) + (this.mealPlanCost || 0);
+  next();
+});
 
 // 🔒 Prevent duplicate unit numbers per property
 unitSchema.index({ property: 1, unitNumber: 1 }, { unique: true });

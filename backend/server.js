@@ -32,6 +32,7 @@ const propertyRoutes = require("./routes/propertyRoutes");
 const tenantRoutes = require("./routes/tenantRoutes");
 const unitRoute = require("./routes/unitRoute");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const adminRoutes = require("./routes/adminRoutes"); // Admin routes
 
 // Use routes
 app.use("/api/auth", authRoutes);
@@ -40,6 +41,8 @@ app.use("/api/properties", propertyRoutes);
 app.use("/api/tenants", tenantRoutes);
 app.use("/api/units", unitRoute);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/admin", adminRoutes);
+
 
 const PORT = process.env.PORT || 5000;
 
