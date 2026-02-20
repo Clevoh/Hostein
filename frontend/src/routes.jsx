@@ -4,6 +4,8 @@ import { Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import RentalsPage from "./pages/public/RentalsPage";
+import PropertyDetailsPage from "./pages/public/PropertyDetailsPage";
 
 import RequireRole from "./components/auth/RequireRole";
 
@@ -36,6 +38,12 @@ export default function AppRoutes() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+
+      {/* 🆕 PUBLIC RENTAL BROWSING */}
+      <Route path="/rentals" element={<RentalsPage />} />
+      <Route path="/apartments" element={<RentalsPage />} />
+      <Route path="/property/:propertyId" element={<PropertyDetailsPage />} />
+      
 
       {/* HOST */}
       <Route element={<RequireRole allowedRoles={["host"]} />}>
