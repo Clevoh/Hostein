@@ -15,22 +15,15 @@ const serviceSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Unit",
     },
-    serviceType: {
+    service: {
       type: String,
       required: true,
-      enum: [
-        "AC Maintenance",
-        "Plumbing Service",
-        "Electrical Repair",
-        "Deep Cleaning",
-        "Regular Cleaning",
-        "Move-in/Move-out",
-        "AC Repair",
-        "Other",
-      ],
+      enum: ["pending", "confirmed", "completed", "cancelled"],
+      default: "pending",
     },
     provider: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
     description: {

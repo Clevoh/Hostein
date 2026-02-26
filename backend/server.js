@@ -8,17 +8,17 @@ require("dotenv").config();
 
 const app = express();
 
-// 🔧 CRITICAL: Fix DNS resolution issue - Force IPv4
+// CRITICAL: Fix DNS resolution issue - Force IPv4
 dns.setDefaultResultOrder('ipv4first');
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// 🆕 Serve static files from uploads folder
+// Serve static files from uploads folder
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// 🆕 Create uploads directory if it doesn't exist
+// Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, "uploads", "properties");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -32,17 +32,20 @@ const propertyRoutes = require("./routes/propertyRoutes");
 const tenantRoutes = require("./routes/tenantRoutes");
 const unitRoute = require("./routes/unitRoute");
 const dashboardRoutes = require("./routes/dashboardRoutes");
-const adminRoutes = require("./routes/adminRoutes"); // Admin routes
+const adminRoutes = require("./routes/adminRoutes");
+const serviceOfferingRoutes = require("./routes/serviceOfferingRoutes");
+const serviceProviderRoutes = require("./routes/serviceProviderRoutes");
 
 // Use routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/properties", propertyRoutes);
+app.use("/api/service-provider", serviceProviderRoutes); //  fixed: was /api/service-providers
+app.use("/api/service-offerings", serviceOfferingRoutes);
 app.use("/api/tenants", tenantRoutes);
 app.use("/api/units", unitRoute);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/admin", adminRoutes);
-
 
 const PORT = process.env.PORT || 5000;
 
@@ -52,7 +55,7 @@ const PORT = process.env.PORT || 5000;
     console.log("🔍 Connecting to MongoDB...");
     
     await mongoose.connect(process.env.MONGO_URI, {
-      family: 4, // Force IPv4
+      family: 4,
       serverSelectionTimeoutMS: 10000,
     });
     
