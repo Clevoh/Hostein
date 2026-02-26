@@ -26,19 +26,18 @@ export default function Login() {
       const res = await api.post("/users/login", form);
       const { token, _id, name, email, role } = res.data;
 
-      // Construct user object
       const user = { _id, name, email, role, token };
-
-      // Use AuthContext login
       login(user);
 
       // Role-based redirect
       if (role === "host" || role === "landlord") {
         navigate("/dashboard", { replace: true });
+      } else if (role === "client") {
+        navigate("/client", { replace: true });
+      } else if (role === "service_provider") {
+        navigate("/service-provider", { replace: true });
       } else if (role === "admin") {
         navigate("/admin", { replace: true });
-      } else {
-        navigate("/client", { replace: true });
       }
     } catch (err) {
       console.error("Login error:", err);

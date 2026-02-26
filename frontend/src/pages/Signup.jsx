@@ -76,11 +76,13 @@ export default function Signup() {
 
           <select
             name="role"
+            value={form.role}
             onChange={handleChange}
             className="w-full p-3 border rounded"
           >
             <option value="client">Client / Tenant</option>
             <option value="host">Host / Landlord</option>
+            <option value="service_provider">Service Provider</option>
           </select>
 
           <input

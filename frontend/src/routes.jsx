@@ -31,6 +31,14 @@ import AdminUsers from "./pages/admin/UsersPage";
 import AdminProperties from "./pages/admin/PropertiesPage";
 import AdminReports from "./pages/admin/Reports";
 
+/* SERVICE PROVIDER */
+import ServiceProviderLayout from "./Layouts/service-provider/ServiceProviderLayout";
+import ServiceProviderDashboard from "./pages/service-provider/ServiceProviderDashboard";
+import ServiceProviderEarnings from "./pages/service-provider/ServiceProviderEarnings";
+import ServiceProviderBookings from "./pages/service-provider/ServiceProviderBookingsPage";
+import ServiceProviderProfile from "./pages/service-provider/ServiceProviderProfile";
+import MyServicesPage from "./pages/service-provider/MyServicesPage";
+
 export default function AppRoutes() {
   return (
     <Routes>
@@ -39,30 +47,18 @@ export default function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
 
-      {/* 🆕 PUBLIC RENTAL BROWSING */}
+      {/* PUBLIC RENTAL BROWSING */}
       <Route path="/rentals" element={<RentalsPage />} />
       <Route path="/apartments" element={<RentalsPage />} />
       <Route path="/property/:propertyId" element={<PropertyDetailsPage />} />
-      
 
       {/* HOST */}
       <Route element={<RequireRole allowedRoles={["host"]} />}>
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Overview />} />
-
-          {/* PROPERTIES */}
           <Route path="properties" element={<PropertiesPage />} />
-
-          {/* UNITS — ALL UNITS VIEW (Shows all units across all properties) */}
           <Route path="units" element={<AllUnitsPage />} />
-
-          {/* UNITS — PROPERTY-SPECIFIC (For managing units within a specific property) */}
-          <Route
-            path="properties/:propertyId/units"
-            element={<PropertyUnitsPage />}
-          />
-
-          {/* TENANTS */}
+          <Route path="properties/:propertyId/units" element={<PropertyUnitsPage />} />
           <Route path="tenants" element={<TenantsPage />} />
         </Route>
       </Route>
@@ -74,6 +70,17 @@ export default function AppRoutes() {
           <Route path="bookings" element={<ClientBookings />} />
           <Route path="services" element={<ClientServices />} />
           <Route path="profile" element={<ClientProfile />} />
+        </Route>
+      </Route>
+
+      {/* SERVICE PROVIDER */}
+      <Route element={<RequireRole allowedRoles={["service_provider"]} />}>
+        <Route path="/service-provider" element={<ServiceProviderLayout />}>
+          <Route index element={<ServiceProviderDashboard />} />
+          <Route path="earnings" element={<ServiceProviderEarnings />} />
+          <Route path="bookings" element={<ServiceProviderBookings />} />
+          <Route path="services" element={<MyServicesPage />} />
+          <Route path="profile" element={<ServiceProviderProfile />} />
         </Route>
       </Route>
 
