@@ -1,46 +1,72 @@
+const mongoose = require("mongoose");
 const ServiceOffering = require("../models/ServiceOffering");
 
-// Get all service offerings (host's own offerings)
+/* ============================= */
+/* GET MY OFFERINGS (Provider) */
+/* ============================= */
 exports.getMyOfferings = async (req, res) => {
   try {
-    const offerings = await ServiceOffering.find({ provider: req.user._id }).sort({ createdAt: -1 });
-    res.json(offerings);
+    const offerings = await ServiceOffering.find({
+      provider: req.user._id,
+    })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(offerings);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Failed to fetch offerings" });
   }
 };
 
-// Get all active service offerings (for clients to browse)
+/* ============================= */
+/* GET ACTIVE OFFERINGS (Public) */
+/* ============================= */
 exports.getActiveOfferings = async (req, res) => {
   try {
     const offerings = await ServiceOffering.find({ isActive: true })
       .populate("provider", "name email")
       .sort({ createdAt: -1 });
-    res.json(offerings);
+
+    res.status(200).json(offerings);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Failed to fetch active offerings" });
   }
 };
 
-// Get single service offering
+/* ============================= */
+/* GET OFFERING BY ID (Public) */
+/* ============================= */
 exports.getOfferingById = async (req, res) => {
   try {
-    const offering = await ServiceOffering.findById(req.params.id).populate("provider", "name email");
-    
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid service ID" });
+    }
+
+    const offering = await ServiceOffering.findById(id)
+      .populate("provider", "name email");
+
     if (!offering) {
       return res.status(404).json({ message: "Service offering not found" });
     }
 
-    res.json(offering);
+    // Only allow viewing if active
+    if (!offering.isActive) {
+      return res.status(404).json({ message: "Service not available" });
+    }
+
+    res.status(200).json(offering);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Failed to fetch service offering" });
   }
 };
 
-// Create service offering (host only)
+/* ============================= */
+/* CREATE OFFERING (Provider) */
+/* ============================= */
 exports.createOffering = async (req, res) => {
   try {
-    const { name, description, category, price, duration, features, isActive } = req.body;
+    const { name, description, category, price, duration, features } = req.body;
 
     if (!name || !description || !category || !price) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -48,65 +74,88 @@ exports.createOffering = async (req, res) => {
 
     const offering = await ServiceOffering.create({
       provider: req.user._id,
-      name,
-      description,
+      name: name.trim(),
+      description: description.trim(),
       category,
       price: Number(price),
       duration,
-      features: features || [],
-      isActive: isActive !== undefined ? isActive : true,
+      features: Array.isArray(features) ? features : [],
+      isActive: true,
     });
 
     res.status(201).json(offering);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ message: "Failed to create offering" });
   }
 };
 
-// Update service offering
+/* ============================= */
+/* UPDATE OFFERING */
+/* ============================= */
 exports.updateOffering = async (req, res) => {
   try {
-    const offering = await ServiceOffering.findById(req.params.id);
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid service ID" });
+    }
+
+    const offering = await ServiceOffering.findById(id);
 
     if (!offering) {
       return res.status(404).json({ message: "Service offering not found" });
     }
 
-    // Check if user owns this offering
-    if (offering.provider.toString() !== req.user._id.toString() && req.user.role !== "admin") {
-      return res.status(403).json({ message: "Not authorized to update this offering" });
+    if (
+      offering.provider.toString() !== req.user._id.toString() &&
+      req.user.role !== "admin"
+    ) {
+      return res.status(403).json({ message: "Not authorized" });
     }
 
+    // Prevent provider field from being modified
+    delete req.body.provider;
+
     const updatedOffering = await ServiceOffering.findByIdAndUpdate(
-      req.params.id,
+      id,
       req.body,
       { new: true, runValidators: true }
     );
 
-    res.json(updatedOffering);
+    res.status(200).json(updatedOffering);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ message: "Failed to update offering" });
   }
 };
 
-// Delete service offering
+/* ============================= */
+/* DELETE OFFERING */
+/* ============================= */
 exports.deleteOffering = async (req, res) => {
   try {
-    const offering = await ServiceOffering.findById(req.params.id);
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid service ID" });
+    }
+
+    const offering = await ServiceOffering.findById(id);
 
     if (!offering) {
       return res.status(404).json({ message: "Service offering not found" });
     }
 
-    // Check if user owns this offering
-    if (offering.provider.toString() !== req.user._id.toString() && req.user.role !== "admin") {
-      return res.status(403).json({ message: "Not authorized to delete this offering" });
+    if (
+      offering.provider.toString() !== req.user._id.toString() &&
+      req.user.role !== "admin"
+    ) {
+      return res.status(403).json({ message: "Not authorized" });
     }
 
-    await ServiceOffering.findByIdAndDelete(req.params.id);
+    await ServiceOffering.findByIdAndDelete(id);
 
-    res.json({ message: "Service offering deleted successfully" });
+    res.status(200).json({ message: "Service offering deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Failed to delete offering" });
   }
 };

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { protect } = require("../middleware/authMiddleware");
+
 const {
   getMyOfferings,
   getActiveOfferings,
@@ -10,16 +11,26 @@ const {
   deleteOffering,
 } = require("../controllers/ServiceOfferingController");
 
-// All routes require authentication
-router.use(protect);
+/* ============================= */
+/* PUBLIC ROUTES */
+/* ============================= */
 
-// Client routes - browse active offerings
+// Anyone can browse active services
 router.get("/active", getActiveOfferings);
 
-// Host routes - manage their offerings
+// Anyone can view a single offering
+router.get("/:id", getOfferingById);
+
+/* ============================= */
+/* PROTECTED ROUTES */
+/* ============================= */
+
+// Everything below requires login
+router.use(protect);
+
+// Provider manages own offerings
 router.get("/", getMyOfferings);
 router.post("/", createOffering);
-router.get("/:id", getOfferingById);
 router.put("/:id", updateOffering);
 router.delete("/:id", deleteOffering);
 
