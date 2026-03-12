@@ -4,8 +4,12 @@ import { Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+
+// PUBLIC PAGES
 import RentalsPage from "./pages/public/RentalsPage";
 import PropertyDetailsPage from "./pages/public/PropertyDetailsPage";
+import ServicesPage from "./pages/public/ServicesPage";
+import ServiceDetailsPage from "./pages/public/ServiceDetailsPage";
 
 import RequireRole from "./components/auth/RequireRole";
 
@@ -24,20 +28,20 @@ import ClientBookings from "./pages/client/ClientBookings_API";
 import ClientServices from "./pages/client/ClientServices_API";
 import ClientProfile from "./pages/client/ClientProfile_API";
 
+/* SERVICE PROVIDER */
+import ServiceProviderLayout from "./layouts/service-provider/ServiceProviderLayout";
+import ServiceProviderDashboard from "./pages/service-provider/ServiceProviderDashboard";
+import ServiceProviderEarnings from "./pages/service-provider/ServiceProviderEarnings";
+import ServiceProviderBookingsPage from "./pages/service-provider/ServiceProviderBookingsPage";
+import ServiceProviderProfile from "./pages/service-provider/ServiceProviderProfile";
+import MyServicesPage from "./pages/service-provider/MyServicesPage";
+
 /* ADMIN */
 import AdminLayout from "./layouts/admin/AdminLayout";
 import AdminHome from "./pages/admin/AdminHome";
 import AdminUsers from "./pages/admin/UsersPage";
 import AdminProperties from "./pages/admin/PropertiesPage";
 import AdminReports from "./pages/admin/Reports";
-
-/* SERVICE PROVIDER */
-import ServiceProviderLayout from "./Layouts/service-provider/ServiceProviderLayout";
-import ServiceProviderDashboard from "./pages/service-provider/ServiceProviderDashboard";
-import ServiceProviderEarnings from "./pages/service-provider/ServiceProviderEarnings";
-import ServiceProviderBookings from "./pages/service-provider/ServiceProviderBookingsPage";
-import ServiceProviderProfile from "./pages/service-provider/ServiceProviderProfile";
-import MyServicesPage from "./pages/service-provider/MyServicesPage";
 
 export default function AppRoutes() {
   return (
@@ -51,6 +55,10 @@ export default function AppRoutes() {
       <Route path="/rentals" element={<RentalsPage />} />
       <Route path="/apartments" element={<RentalsPage />} />
       <Route path="/property/:propertyId" element={<PropertyDetailsPage />} />
+
+      {/* 🆕 PUBLIC SERVICES BROWSING */}
+      <Route path="/services" element={<ServicesPage />} />
+      <Route path="/service/:serviceId" element={<ServiceDetailsPage />} />
 
       {/* HOST */}
       <Route element={<RequireRole allowedRoles={["host"]} />}>
@@ -78,7 +86,7 @@ export default function AppRoutes() {
         <Route path="/service-provider" element={<ServiceProviderLayout />}>
           <Route index element={<ServiceProviderDashboard />} />
           <Route path="earnings" element={<ServiceProviderEarnings />} />
-          <Route path="bookings" element={<ServiceProviderBookings />} />
+          <Route path="bookings" element={<ServiceProviderBookingsPage />} />
           <Route path="services" element={<MyServicesPage />} />
           <Route path="profile" element={<ServiceProviderProfile />} />
         </Route>
