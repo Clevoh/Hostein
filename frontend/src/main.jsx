@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import "./tailwind.css";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 
 import { AuthProvider } from "./context/AuthContext";
 import { PropertyProvider } from "./context/PropertyContext";
@@ -14,7 +15,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <AuthProvider>
         <PropertyProvider>
           <NotificationProvider>
-            <App />
+            <ThemeProvider>
+               <App />
+            </ThemeProvider>
           </NotificationProvider>
         </PropertyProvider>
       </AuthProvider>

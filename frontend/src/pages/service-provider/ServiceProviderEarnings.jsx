@@ -1,3 +1,4 @@
+// src/pages/service-provider/ServiceProviderEarnings.jsx
 import { useEffect, useState } from "react";
 import { DollarSign, TrendingUp, Calendar } from "lucide-react";
 
@@ -11,7 +12,7 @@ export default function ServiceProviderEarnings() {
 
   const fetchEarnings = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/service-provider/dashboard", {
+      const res = await fetch("${import.meta.env.VITE_API_URL}/api/service-provider/dashboard", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -35,74 +36,99 @@ export default function ServiceProviderEarnings() {
 
   return (
     <div className="space-y-6">
-      {/* HEADER */}
       <div>
-        <h2 className="text-3xl font-bold text-gray-900">Earnings</h2>
-        <p className="text-gray-500 mt-1">Track your income and completed jobs</p>
+        <h2 style={{ color: "var(--text)" }} className="text-3xl font-bold">Earnings</h2>
+        <p style={{ color: "var(--text2)" }} className="mt-1">Track your income and completed jobs</p>
       </div>
 
-      {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white">
+        {/* Total Earnings — gradient card */}
+        <div
+          className="rounded-xl p-6 shadow-sm text-white"
+          style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
+        >
           <div className="flex items-start justify-between mb-4">
             <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-              <DollarSign size={24} />
+              <DollarSign size={24} className="text-white" />
             </div>
-            <TrendingUp size={20} className="text-green-100" />
+            <TrendingUp size={20} className="text-emerald-100" />
           </div>
-          <p className="text-green-100 text-sm font-medium mb-1">Total Earnings</p>
-          <p className="text-3xl font-bold">${earnings?.totalEarnings?.toLocaleString() || 0}</p>
+          <p className="text-emerald-100 text-sm font-medium mb-1">Total Earnings</p>
+          <p className="text-3xl font-bold">
+            ${earnings?.totalEarnings?.toLocaleString() || 0}
+          </p>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border">
+        {/* Completed Jobs */}
+        <div
+          className="rounded-xl p-6 shadow-sm border"
+          style={{ background: "var(--surface)", borderColor: "var(--border)" }}
+        >
           <div className="flex items-start justify-between mb-4">
             <div className="p-3 bg-blue-50 rounded-xl">
               <Calendar size={24} className="text-blue-600" />
             </div>
           </div>
-          <p className="text-gray-500 text-sm font-medium mb-1">Completed Jobs</p>
-          <p className="text-3xl font-bold text-gray-900">{earnings?.completedJobs || 0}</p>
+          <p style={{ color: "var(--text2)" }} className="text-sm font-medium mb-1">Completed Jobs</p>
+          <p style={{ color: "var(--text)" }} className="text-3xl font-bold">
+            {earnings?.completedJobs || 0}
+          </p>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border">
+        {/* Avg Job Value */}
+        <div
+          className="rounded-xl p-6 shadow-sm border"
+          style={{ background: "var(--surface)", borderColor: "var(--border)" }}
+        >
           <div className="flex items-start justify-between mb-4">
             <div className="p-3 bg-purple-50 rounded-xl">
               <DollarSign size={24} className="text-purple-600" />
             </div>
           </div>
-          <p className="text-gray-500 text-sm font-medium mb-1">Avg. Job Value</p>
-          <p className="text-3xl font-bold text-gray-900">
-            ${earnings?.completedJobs > 0 
-              ? Math.round(earnings.totalEarnings / earnings.completedJobs) 
+          <p style={{ color: "var(--text2)" }} className="text-sm font-medium mb-1">Avg. Job Value</p>
+          <p style={{ color: "var(--text)" }} className="text-3xl font-bold">
+            ${earnings?.completedJobs > 0
+              ? Math.round(earnings.totalEarnings / earnings.completedJobs)
               : 0}
           </p>
         </div>
       </div>
 
-      {/* EARNINGS BREAKDOWN */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Earnings Breakdown</h3>
+      <div
+        className="rounded-xl p-6 shadow-sm border"
+        style={{ background: "var(--surface)", borderColor: "var(--border)" }}
+      >
+        <h3 style={{ color: "var(--text)" }} className="text-lg font-semibold mb-4">Earnings Breakdown</h3>
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <span className="text-gray-700">This Month</span>
-            <span className="font-semibold text-gray-900">${earnings?.totalEarnings?.toLocaleString() || 0}</span>
-          </div>
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <span className="text-gray-700">Pending Payments</span>
-            <span className="font-semibold text-orange-600">$0</span>
-          </div>
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <span className="text-gray-700">Total Paid Out</span>
-            <span className="font-semibold text-green-600">${earnings?.totalEarnings?.toLocaleString() || 0}</span>
-          </div>
+          {[
+            { label: "This Month",        value: `$${earnings?.totalEarnings?.toLocaleString() || 0}`, valueClass: "" },
+            { label: "Pending Payments",  value: "$0",                                                  valueClass: "text-orange-600" },
+            { label: "Total Paid Out",    value: `$${earnings?.totalEarnings?.toLocaleString() || 0}`,  valueClass: "text-green-600" },
+          ].map(({ label, value, valueClass }) => (
+            <div
+              key={label}
+              className="flex items-center justify-between p-3 rounded-lg"
+              style={{ background: "var(--bg)" }}
+            >
+              <span style={{ color: "var(--text2)" }}>{label}</span>
+              <span
+                className={`font-semibold ${valueClass}`}
+                style={!valueClass ? { color: "var(--text)" } : {}}
+              >
+                {value}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* INFO BOX */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <p className="text-sm text-blue-800">
-          💡 <strong>Payment Information:</strong> Earnings are calculated from completed jobs. 
-          Contact support for payout options and schedules.
+      <div
+        className="rounded-xl p-4 border"
+        style={{ background: "var(--surface)", borderColor: "var(--border)" }}
+      >
+        <p className="text-sm" style={{ color: "var(--text2)" }}>
+          💡 <strong style={{ color: "var(--text)" }}>Payment Information:</strong>{" "}
+          Earnings are calculated from completed jobs. Contact support for payout options and schedules.
         </p>
       </div>
     </div>

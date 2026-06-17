@@ -1,18 +1,9 @@
-// src/pages/client/ClientDashboardHome.jsx
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Home,
-  Calendar,
-  Bell,
-  TrendingUp,
-  MapPin,
-  Clock,
-  DollarSign,
-  Star,
-  ChevronRight,
-  CheckCircle,
-  AlertCircle,
+  Home, Calendar, Bell, MapPin, Clock,
+  DollarSign, Star, ChevronRight, CheckCircle,
+  AlertCircle, TrendingUp, Wrench, ArrowUpRight,
 } from "lucide-react";
 
 export default function ClientDashboardHome() {
@@ -26,33 +17,30 @@ export default function ClientDashboardHome() {
   const [recentActivities] = useState([
     {
       id: 1,
-      type: "booking",
       title: "Booking Confirmed",
       description: "Luxury Apartment - Downtown",
       date: "2 hours ago",
       icon: CheckCircle,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
     },
     {
       id: 2,
-      type: "service",
       title: "Maintenance Scheduled",
       description: "AC repair - Jan 15, 2026",
       date: "1 day ago",
       icon: Clock,
       color: "text-blue-600",
-      bgColor: "bg-blue-50",
+      bg: "bg-blue-50",
     },
     {
       id: 3,
-      type: "alert",
       title: "Payment Due",
       description: "Monthly rent payment",
       date: "3 days ago",
       icon: AlertCircle,
       color: "text-orange-600",
-      bgColor: "bg-orange-50",
+      bg: "bg-orange-50",
     },
   ]);
 
@@ -87,152 +75,105 @@ export default function ClientDashboardHome() {
     },
   ]);
 
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "long", month: "long", day: "numeric",
+  });
+
   return (
-    <div className="space-y-6 max-w-7xl">
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Welcome back! 👋
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Here's what's happening with your account today.
-          </p>
-        </div>
+    <div className="space-y-5 pb-8 max-w-7xl">
 
-        <Link
-          to="/rentals"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
-        >
-          <Home size={18} />
-          Find a Home
-        </Link>
-      </div>
-
-      {/* STATS CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-              <Calendar size={24} />
-            </div>
-            <TrendingUp size={20} className="opacity-70" />
+      {/* ── HERO ── */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 p-6 md:p-8 text-white shadow-lg">
+        <div className="pointer-events-none absolute -top-10 -right-10 w-52 h-52 rounded-full bg-blue-600/20 blur-2xl" />
+        <div className="pointer-events-none absolute bottom-0 left-1/3 w-40 h-40 rounded-full bg-indigo-600/15 blur-2xl" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-blue-300 text-xs font-semibold uppercase tracking-widest mb-1">{today}</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Welcome back! 👋</h1>
+            <p className="text-slate-400 text-sm mt-1">Here's what's happening with your account today</p>
           </div>
-          <p className="text-blue-100 text-sm font-medium">Total Bookings</p>
-          <p className="text-3xl font-bold mt-1">{stats.totalBookings}</p>
-          <p className="text-blue-100 text-xs mt-2">All time bookings</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-              <Clock size={24} />
-            </div>
-            <TrendingUp size={20} className="opacity-70" />
-          </div>
-          <p className="text-green-100 text-sm font-medium">Upcoming Stays</p>
-          <p className="text-3xl font-bold mt-1">{stats.upcomingStays}</p>
-          <p className="text-green-100 text-xs mt-2">Scheduled bookings</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-              <CheckCircle size={24} />
-            </div>
-            <TrendingUp size={20} className="opacity-70" />
-          </div>
-          <p className="text-purple-100 text-sm font-medium">Active Services</p>
-          <p className="text-3xl font-bold mt-1">{stats.activeServices}</p>
-          <p className="text-purple-100 text-xs mt-2">Ongoing services</p>
-        </div>
-
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-              <Bell size={24} />
-            </div>
-            {stats.notifications > 0 && (
-              <span className="px-2 py-1 bg-white text-orange-600 rounded-full text-xs font-bold">
-                New
-              </span>
-            )}
-          </div>
-          <p className="text-orange-100 text-sm font-medium">Notifications</p>
-          <p className="text-3xl font-bold mt-1">{stats.notifications}</p>
-          <p className="text-orange-100 text-xs mt-2">Unread alerts</p>
+          <Link
+            to="/rentals"
+            className="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/10 text-white rounded-xl font-medium text-sm transition"
+          >
+            <Home size={16} />
+            Find a Home
+          </Link>
         </div>
       </div>
 
-      {/* MAIN CONTENT GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* LEFT COLUMN - Upcoming Bookings */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* UPCOMING BOOKINGS */}
-          <div className="bg-white rounded-xl border shadow-sm">
-            <div className="p-6 border-b">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Upcoming Bookings
-                </h2>
-                <Link
-                  to="/client/bookings"
-                  className="text-blue-600 text-sm font-medium hover:underline flex items-center gap-1"
-                >
-                  View all
-                  <ChevronRight size={16} />
-                </Link>
+      {/* ── STAT CARDS ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { label: "Total Bookings",   value: stats.totalBookings,  icon: Calendar,     gradient: "from-blue-500 to-blue-600",    sub: "All time" },
+          { label: "Upcoming Stays",   value: stats.upcomingStays,  icon: Clock,        gradient: "from-emerald-500 to-teal-600", sub: "Scheduled" },
+          { label: "Active Services",  value: stats.activeServices, icon: Wrench,       gradient: "from-violet-500 to-violet-600",sub: "Ongoing" },
+          { label: "Notifications",    value: stats.notifications,  icon: Bell,         gradient: "from-orange-500 to-amber-500", sub: "Unread", badge: true },
+        ].map(({ label, value, icon: Icon, gradient, sub, badge }) => (
+          <div key={label} className={`relative bg-gradient-to-br ${gradient} rounded-2xl p-4 md:p-5 text-white shadow-sm overflow-hidden`}>
+            <div className="pointer-events-none absolute -top-4 -right-4 w-20 h-20 rounded-full bg-white/10" />
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                <Icon size={17} className="text-white" />
               </div>
+              {badge && value > 0 && (
+                <span className="text-[10px] font-bold bg-white text-orange-600 px-2 py-0.5 rounded-full">New</span>
+              )}
+              {!badge && <TrendingUp size={14} className="opacity-60" />}
+            </div>
+            <p className="text-white/70 text-xs font-medium mb-0.5">{label}</p>
+            <p className="text-2xl md:text-3xl font-bold">{value}</p>
+            <p className="text-white/50 text-xs mt-1">{sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── MAIN GRID ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+        {/* Left column */}
+        <div className="lg:col-span-2 space-y-5">
+
+          {/* Upcoming bookings */}
+          <div className="rounded-2xl border shadow-sm overflow-hidden" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+            <div className="flex items-center justify-between px-5 md:px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+              <h2 className="font-semibold" style={{ color: "var(--text)" }}>Upcoming Bookings</h2>
+              <Link to="/client/bookings" className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                View all <ChevronRight size={14} />
+              </Link>
             </div>
 
-            <div className="p-6">
+            <div className="p-5 md:p-6">
               {upcomingBookings.length > 0 ? (
-                <div className="space-y-4">
-                  {upcomingBookings.map((booking) => (
-                    <div
-                      key={booking.id}
-                      className="flex gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                    >
-                      <img
-                        src={booking.image}
-                        alt={booking.property}
-                        className="w-24 h-24 rounded-lg object-cover"
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">
-                          {booking.property}
-                        </h3>
-                        <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                          <MapPin size={14} />
-                          {booking.location}
+                <div className="space-y-3">
+                  {upcomingBookings.map((b) => (
+                    <div key={b.id} className="flex gap-4 p-4 rounded-2xl transition-colors cursor-pointer hover:opacity-90" style={{ background: "var(--bg)" }}>
+                      <img src={b.image} alt={b.property} className="w-20 h-20 rounded-xl object-cover flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold truncate" style={{ color: "var(--text)" }}>{b.property}</h3>
+                        <p className="text-xs flex items-center gap-1 mt-0.5" style={{ color: "var(--text2)" }}>
+                          <MapPin size={11} /> {b.location}
                         </p>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                          <span>Check-in: {booking.checkIn}</span>
-                          <span>•</span>
-                          <span>Check-out: {booking.checkOut}</span>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs" style={{ color: "var(--text2)" }}>
+                          <span>In: {b.checkIn}</span>
+                          <span className="text-slate-300">·</span>
+                          <span>Out: {b.checkOut}</span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500">Total</p>
-                        <p className="text-xl font-bold text-gray-900">
-                          ${booking.amount}
-                        </p>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-xs mb-0.5" style={{ color: "var(--text2)" }}>Total</p>
+                        <p className="text-lg font-bold" style={{ color: "var(--text)" }}>${b.amount}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Calendar className="text-gray-400" size={32} />
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-3">
+                    <Calendar size={24} className="text-slate-300" />
                   </div>
-                  <p className="text-gray-600 mb-4">
-                    You don't have any bookings yet.
-                  </p>
-                  <Link
-                    to="/rentals"
-                    className="text-blue-600 font-medium hover:underline"
-                  >
+                  <p className="text-sm mb-4" style={{ color: "var(--text2)" }}>No upcoming bookings yet</p>
+                  <Link to="/rentals" className="text-blue-600 text-sm font-medium hover:text-blue-700">
                     Browse available homes →
                   </Link>
                 </div>
@@ -240,52 +181,40 @@ export default function ClientDashboardHome() {
             </div>
           </div>
 
-          {/* RECOMMENDED PROPERTIES */}
-          <div className="bg-white rounded-xl border shadow-sm">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Recommended for You
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Properties you might like based on your preferences
-              </p>
+          {/* Recommended */}
+          <div className="rounded-2xl border shadow-sm overflow-hidden" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+            <div className="px-5 md:px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+              <h2 className="font-semibold" style={{ color: "var(--text)" }}>Recommended for You</h2>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Properties you might like</p>
             </div>
 
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {recommendedProperties.map((property) => (
-                  <div
-                    key={property.id}
-                    className="group border rounded-lg overflow-hidden hover:shadow-lg transition-all cursor-pointer"
-                  >
-                    <div className="relative h-40">
+            <div className="p-5 md:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {recommendedProperties.map((p) => (
+                  <div key={p.id} className="group rounded-2xl border overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer" style={{ borderColor: "var(--border)" }}>
+                    <div className="relative h-36 overflow-hidden bg-slate-100">
                       <img
-                        src={property.image}
-                        alt={property.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        src={p.image}
+                        alt={p.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <div className="absolute top-3 right-3 bg-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                        <Star size={12} className="text-yellow-500 fill-yellow-500" />
-                        {property.rating}
+                      <div className="absolute top-2.5 right-2.5 bg-white/95 backdrop-blur-sm px-2 py-1 rounded-xl flex items-center gap-1 text-xs font-semibold text-slate-800">
+                        <Star size={11} className="text-yellow-500 fill-yellow-500" />
+                        {p.rating}
                       </div>
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-gray-900">
-                        {property.name}
-                      </h3>
-                      <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                        <MapPin size={14} />
-                        {property.location}
+                    <div className="p-4" style={{ background: "var(--surface)" }}>
+                      <h3 className="font-semibold text-sm" style={{ color: "var(--text)" }}>{p.name}</h3>
+                      <p className="text-xs flex items-center gap-1 mt-0.5" style={{ color: "var(--text2)" }}>
+                        <MapPin size={10} /> {p.location}
                       </p>
                       <div className="flex items-center justify-between mt-3">
-                        <div>
-                          <span className="text-lg font-bold text-gray-900">
-                            ${property.price}
-                          </span>
-                          <span className="text-sm text-gray-500">/month</span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="font-bold" style={{ color: "var(--text)" }}>${p.price}</span>
+                          <span className="text-xs text-slate-400">/month</span>
                         </div>
-                        <button className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
-                          View Details
+                        <button className="px-3 py-1.5 bg-slate-900 hover:bg-slate-700 text-white text-xs font-semibold rounded-xl transition flex items-center gap-1">
+                          View <ArrowUpRight size={11} />
                         </button>
                       </div>
                     </div>
@@ -296,107 +225,56 @@ export default function ClientDashboardHome() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN - Recent Activity & Quick Actions */}
-        <div className="space-y-6">
-          {/* RECENT ACTIVITY */}
-          <div className="bg-white rounded-xl border shadow-sm">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Recent Activity
-              </h2>
-            </div>
+        {/* Right column */}
+        <div className="space-y-5">
 
-            <div className="p-6">
-              <div className="space-y-4">
-                {recentActivities.map((activity) => {
-                  const Icon = activity.icon;
-                  return (
-                    <div
-                      key={activity.id}
-                      className="flex gap-3 items-start hover:bg-gray-50 p-3 rounded-lg transition-colors cursor-pointer"
-                    >
-                      <div
-                        className={`${activity.bgColor} p-2 rounded-lg shrink-0`}
-                      >
-                        <Icon size={18} className={activity.color} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 text-sm">
-                          {activity.title}
-                        </p>
-                        <p className="text-sm text-gray-600 truncate">
-                          {activity.description}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {activity.date}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <Link
-                to="/client/activity"
-                className="block text-center mt-4 text-blue-600 text-sm font-medium hover:underline"
-              >
-                View all activity
-              </Link>
+          {/* Recent activity */}
+          <div className="rounded-2xl border shadow-sm overflow-hidden" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+            <div className="px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+              <h2 className="font-semibold" style={{ color: "var(--text)" }}>Recent Activity</h2>
             </div>
+            <ul className="divide-y" style={{ borderColor: "var(--border)" }}>
+              {recentActivities.map(({ id, title, description, date, icon: Icon, color, bg }) => (
+                <li key={id} className="flex gap-3 items-start px-5 py-3.5 hover:bg-slate-50 transition-colors cursor-pointer">
+                  <div className={`${bg} p-2 rounded-xl flex-shrink-0`}>
+                    <Icon size={15} className={color} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm" style={{ color: "var(--text)" }}>{title}</p>
+                    <p className="text-xs truncate" style={{ color: "var(--text2)" }}>{description}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>{date}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* QUICK ACTIONS */}
-          <div className="bg-white rounded-xl border shadow-sm">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Quick Actions
-              </h2>
+          {/* Quick actions */}
+          <div className="rounded-2xl border shadow-sm overflow-hidden" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+            <div className="px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+              <h2 className="font-semibold" style={{ color: "var(--text)" }}>Quick Actions</h2>
             </div>
-
-            <div className="p-6 space-y-3">
-              <Link
-                to="/client/bookings"
-                className="flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors group"
-              >
-                <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                  <Calendar className="text-blue-600" size={20} />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">My Bookings</p>
-                  <p className="text-sm text-gray-600">
-                    View and manage bookings
-                  </p>
-                </div>
-                <ChevronRight className="text-gray-400" size={20} />
-              </Link>
-
-              <Link
-                to="/client/services"
-                className="flex items-center gap-3 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors group"
-              >
-                <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
-                  <CheckCircle className="text-purple-600" size={20} />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">My Services</p>
-                  <p className="text-sm text-gray-600">Manage your services</p>
-                </div>
-                <ChevronRight className="text-gray-400" size={20} />
-              </Link>
-
-              <Link
-                to="/client/profile"
-                className="flex items-center gap-3 p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors group"
-              >
-                <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
-                  <DollarSign className="text-green-600" size={20} />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Payments</p>
-                  <p className="text-sm text-gray-600">View payment history</p>
-                </div>
-                <ChevronRight className="text-gray-400" size={20} />
-              </Link>
+            <div className="p-4 space-y-2">
+              {[
+                { to: "/client/bookings", icon: Calendar, label: "My Bookings",  sub: "View and manage",    bg: "bg-blue-50",   color: "text-blue-600" },
+                { to: "/client/services", icon: Wrench,   label: "My Services",  sub: "Manage services",    bg: "bg-violet-50", color: "text-violet-600" },
+                { to: "/client/profile",  icon: DollarSign, label: "Payments",   sub: "View payment history", bg: "bg-emerald-50",color: "text-emerald-600" },
+              ].map(({ to, icon: Icon, label, sub, bg, color }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors group"
+                >
+                  <div className={`${bg} p-2.5 rounded-xl group-hover:scale-105 transition-transform`}>
+                    <Icon size={17} className={color} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm" style={{ color: "var(--text)" }}>{label}</p>
+                    <p className="text-xs" style={{ color: "var(--text2)" }}>{sub}</p>
+                  </div>
+                  <ChevronRight size={16} className="text-slate-300 group-hover:text-slate-500 transition-colors flex-shrink-0" />
+                </Link>
+              ))}
             </div>
           </div>
         </div>

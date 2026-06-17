@@ -19,53 +19,44 @@ export const getUnitById = async (unitId) => {
 };
 
 // Create new unit with images
+// src/services/unitService.js  — only the createUnit / updateUnit functions change
 export const createUnit = async (unitData) => {
   const formData = new FormData();
-  
-  // Append unit data
+
   Object.keys(unitData).forEach((key) => {
     if (key !== "images") {
-      formData.append(key, unitData[key]);
+      // arrays / objects → JSON string
+      const val = unitData[key];
+      formData.append(key, typeof val === "object" && val !== null ? JSON.stringify(val) : val);
     }
   });
-  
-  // Append images
-  if (unitData.images && unitData.images.length > 0) {
-    unitData.images.forEach((image) => {
-      formData.append("images", image);
-    });
+
+  if (unitData.images?.length) {
+    unitData.images.forEach(img => formData.append("images", img));
   }
-  
+
   const res = await api.post("/units", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+    headers: { "Content-Type": "multipart/form-data" },
   });
   return res.data;
 };
 
-// Update unit with optional new images
 export const updateUnit = async (unitId, unitData) => {
   const formData = new FormData();
-  
-  // Append unit data
+
   Object.keys(unitData).forEach((key) => {
     if (key !== "images") {
-      formData.append(key, unitData[key]);
+      const val = unitData[key];
+      formData.append(key, typeof val === "object" && val !== null ? JSON.stringify(val) : val);
     }
   });
-  
-  // Append new images if provided
-  if (unitData.images && unitData.images.length > 0) {
-    unitData.images.forEach((image) => {
-      formData.append("images", image);
-    });
+
+  if (unitData.images?.length) {
+    unitData.images.forEach(img => formData.append("images", img));
   }
-  
+
   const res = await api.put(`/units/${unitId}`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+    headers: { "Content-Type": "multipart/form-data" },
   });
   return res.data;
 };

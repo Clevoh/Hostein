@@ -1,5 +1,84 @@
 @import "tailwindcss";
 
+/* ── BASE INPUT STYLE ── */
 .input {
   @apply w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500;
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+.input::placeholder {
+  color: var(--text2);
+}
+
+/* ── LIGHT THEME ── */
+[data-theme="light"] {
+  --bg:       #F4F1EC;
+  --surface:  #FFFFFF;
+  --surface2: #F0EDE6;
+  --border:   rgba(0, 0, 0, 0.08);
+  --text:     #0A0A0F;
+  --text2:    rgba(10, 10, 15, 0.45);
+  --accent:   #C4903A;
+
+  /* Sidebar */
+  --sidebar-bg:          #0f172a;
+  --sidebar-text:        rgba(244, 241, 236, 0.5);
+  --sidebar-text-active: #ffffff;
+  --sidebar-active-bg:   #2563eb;
+  --sidebar-hover-bg:    rgba(255,255,255,0.06);
+  --sidebar-border:      rgba(255,255,255,0.07);
+
+  /* Topbar */
+  --topbar-bg:     rgba(255, 255, 255, 0.85);
+  --topbar-border: rgba(0, 0, 0, 0.07);
+
+  /* Cards */
+  --card-bg:     #ffffff;
+  --card-border: rgba(0, 0, 0, 0.07);
+
+  /* Tailwind overrides */
+  color-scheme: light;
+}
+
+/* ── DARK THEME ── */
+[data-theme="dark"] {
+  --bg:       #0A0A0F;
+  --surface:  #141418;
+  --surface2: #1E1E24;
+  --border:   rgba(255, 255, 255, 0.08);
+  --text:     #F4F1EC;
+  --text2:    rgba(244, 241, 236, 0.45);
+  --accent:   #D6A364;
+
+  /* Sidebar */
+  --sidebar-bg:          #090909;
+  --sidebar-text:        rgba(244, 241, 236, 0.4);
+  --sidebar-text-active: #ffffff;
+  --sidebar-active-bg:   #2563eb;
+  --sidebar-hover-bg:    rgba(255,255,255,0.05);
+  --sidebar-border:      rgba(255,255,255,0.05);
+
+  /* Topbar */
+  --topbar-bg:     rgba(20, 20, 24, 0.85);
+  --topbar-border: rgba(255, 255, 255, 0.06);
+
+  /* Cards */
+  --card-bg:     #141418;
+  --card-border: rgba(255, 255, 255, 0.07);
+
+  color-scheme: dark;
+}
+
+/* ── UTILITY CLASSES (use these instead of hardcoded Tailwind colors) ── */
+.bg-theme          { background-color: var(--bg); }
+.bg-surface        { background-color: var(--surface); }
+.bg-surface2       { background-color: var(--surface2); }
+.text-theme        { color: var(--text); }
+.text-theme-muted  { color: var(--text2); }
+.border-theme      { border-color: var(--border); }
+.card-theme {
+  background-color: var(--card-bg);
+  border: 0.5px solid var(--card-border);
+  border-radius: 16px;
 }

@@ -33,6 +33,10 @@ const ServiceOfferingSchema = new mongoose.Schema(
             type: Boolean,
             default: true,
         },
+        images: {
+            type: [String], // Array of image URLs
+            default: [],
+        },
         rating: {
             type: Number,
             default: 0,

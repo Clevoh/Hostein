@@ -1,7 +1,7 @@
 // src/services/paymentService.js
 // Handles all payment API calls from the frontend
 
-const API = "http://localhost:5000/api";
+const API = `${import.meta.env.VITE_API_URL}/api`;
 
 function getHeaders() {
   return {

@@ -20,6 +20,16 @@ export const createTenant = async (data) => {
   return res.data;
 };
 
+// Delete tenant
+export const deleteTenant = async (tenantId) => {
+  if (!tenantId) {
+    throw new Error("Tenant ID is required");
+  }
+
+  const res = await api.delete(`/tenants/${tenantId}`);
+  return res.data;
+};
+
 /* =========================
    UNIT ↔ TENANT ACTIONS
 ========================= */

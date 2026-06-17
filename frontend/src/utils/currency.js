@@ -1,15 +1,27 @@
-// currency.js — shared across ServicesPage, ServiceDetailsPage, MyServicesPage
+// src/utils/currency.js
 export const CURRENCIES = [
-  { code: "KES", label: "Kenyan Shilling",    symbol: "KSh",  flag: "🇰🇪" },
-  { code: "UGX", label: "Ugandan Shilling",   symbol: "USh",  flag: "🇺🇬" },
-  { code: "TZS", label: "Tanzanian Shilling", symbol: "TSh",  flag: "🇹🇿" },
-  { code: "RWF", label: "Rwandan Franc",      symbol: "RWF",  flag: "🇷🇼" },
-  { code: "BIF", label: "Burundian Franc",    symbol: "BIF",  flag: "🇧🇮" },
-  { code: "USD", label: "US Dollar",          symbol: "$",    flag: "🇺🇸" },
+  { code: "KES", label: "Kenyan Shilling",    symbol: "KSh", flag: "🇰🇪" },
+  { code: "UGX", label: "Ugandan Shilling",   symbol: "USh", flag: "🇺🇬" },
+  { code: "TZS", label: "Tanzanian Shilling", symbol: "TSh", flag: "🇹🇿" },
+  { code: "RWF", label: "Rwandan Franc",      symbol: "RWF", flag: "🇷🇼" },
+  { code: "BIF", label: "Burundian Franc",    symbol: "BIF", flag: "🇧🇮" },
+  { code: "USD", label: "US Dollar",          symbol: "$",   flag: "🇺🇸" },
 ];
 
-// Approximate rates relative to KES (base = 1 KES)
-// Update these periodically or swap for a live API
+// ✅ NEW: Map country name → currency code
+export const COUNTRY_CURRENCY_MAP = {
+  Kenya:    "KES",
+  Uganda:   "UGX",
+  Tanzania: "TZS",
+  Rwanda:   "RWF",
+  Burundi:  "BIF",
+  // fallback for anything else
+};
+
+export function getCurrencyByCountry(country = "") {
+  return COUNTRY_CURRENCY_MAP[country] || "USD";
+}
+
 const RATES_FROM_KES = {
   KES: 1,
   UGX: 28.5,
@@ -19,11 +31,6 @@ const RATES_FROM_KES = {
   USD: 0.0077,
 };
 
-/**
- * Convert a price stored in KES to the target currency.
- * If your DB stores prices in a different base currency,
- * adjust the `fromCode` parameter accordingly.
- */
 export function convertPrice(amount, fromCode = "KES", toCode = "KES") {
   if (!amount || fromCode === toCode) return Number(amount);
   const inKES = Number(amount) / (RATES_FROM_KES[fromCode] || 1);
@@ -33,16 +40,13 @@ export function convertPrice(amount, fromCode = "KES", toCode = "KES") {
 export function formatPrice(amount, currencyCode = "KES", fromCode = "KES") {
   const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
   const converted = convertPrice(amount, fromCode, currencyCode);
-
-  // Format number nicely
   const formatted = converted >= 1000
     ? converted.toLocaleString("en-US", { maximumFractionDigits: 0 })
     : converted.toLocaleString("en-US", { maximumFractionDigits: 2 });
-
   return `${currency.symbol} ${formatted}`;
 }
 
-export const DEFAULT_CURRENCY = "KES";
+export const DEFAULT_CURRENCY = "USD";
 export const STORAGE_KEY = "hostein_currency";
 
 export function getSavedCurrency() {

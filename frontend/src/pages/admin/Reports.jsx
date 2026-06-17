@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Users, Home, DollarSign, Calendar, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import {
+  TrendingUp, TrendingDown, Users, Home,
+  DollarSign, Calendar, Activity,
+  ArrowUpRight, ArrowDownRight,
+} from "lucide-react";
 import {
   getRevenueReport,
   getUserGrowthReport,
@@ -9,34 +13,15 @@ import {
 
 export default function Reports() {
   const [stats, setStats] = useState({
-    revenue: {
-      total: 0,
-      thisMonth: 0,
-      lastMonth: 0,
-      growth: 0,
-    },
-    users: {
-      total: 0,
-      newThisMonth: 0,
-      activeUsers: 0,
-    },
-    bookings: {
-      total: 0,
-      thisMonth: 0,
-      completedRate: 0,
-    },
-    properties: {
-      total: 0,
-      active: 0,
-      occupancyRate: 0,
-    },
+    revenue:    { total: 0, thisMonth: 0, lastMonth: 0, growth: 0 },
+    users:      { total: 0, newThisMonth: 0, activeUsers: 0 },
+    bookings:   { total: 0, thisMonth: 0, completedRate: 0 },
+    properties: { total: 0, active: 0, occupancyRate: 0 },
   });
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("month");
 
-  useEffect(() => {
-    loadReports();
-  }, [period]);
+  useEffect(() => { loadReports(); }, [period]);
 
   const loadReports = async () => {
     try {
@@ -47,11 +32,10 @@ export default function Reports() {
         getBookingStats(period),
         getPropertyStats(),
       ]);
-
       setStats({
-        revenue: revenue || stats.revenue,
-        users: users || stats.users,
-        bookings: bookings || stats.bookings,
+        revenue:    revenue    || stats.revenue,
+        users:      users      || stats.users,
+        bookings:   bookings   || stats.bookings,
         properties: properties || stats.properties,
       });
     } catch (error) {
@@ -61,27 +45,41 @@ export default function Reports() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="w-10 h-10 rounded-full border-2 animate-spin"
+        style={{ borderColor: "var(--border)", borderTopColor: "#ef4444" }} />
+    </div>
+  );
+
+  const { revenue, users, bookings, properties } = stats;
+  const engagementPct = users.total > 0
+    ? Math.round((users.activeUsers / users.total) * 100)
+    : 0;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* HEADER */}
+    <div className="space-y-6 pb-8 max-w-7xl">
+
+      {/* ── HEADER ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Reports & Analytics</h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1">Platform performance insights</p>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text)" }}>
+            Reports & Analytics
+          </h1>
+          <p className="text-sm mt-0.5" style={{ color: "var(--text2)" }}>
+            Platform performance insights
+          </p>
         </div>
 
         <select
           value={period}
           onChange={(e) => setPeriod(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white"
+          className="px-4 py-2.5 rounded-xl text-sm focus:outline-none self-start sm:self-auto"
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            color: "var(--text)",
+          }}
         >
           <option value="week">Last 7 Days</option>
           <option value="month">Last 30 Days</option>
@@ -90,239 +88,214 @@ export default function Reports() {
         </select>
       </div>
 
-      {/* KEY METRICS - 4 CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        {/* REVENUE CARD */}
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+      {/* ── KEY METRIC CARDS ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Revenue */}
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-4">
-            <DollarSign size={32} className="opacity-80" />
-            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-              stats.revenue.growth >= 0 ? 'bg-green-700' : 'bg-red-700'
+            <div className="p-2 bg-white/20 rounded-xl">
+              <DollarSign size={22} />
+            </div>
+            <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+              revenue.growth >= 0 ? "bg-green-700/60" : "bg-red-700/60"
             }`}>
-              {stats.revenue.growth >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-              {Math.abs(stats.revenue.growth)}%
+              {revenue.growth >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+              {Math.abs(revenue.growth)}%
             </div>
           </div>
-          <p className="text-sm opacity-90 mb-1">Total Revenue</p>
-          <h3 className="text-3xl font-bold">${stats.revenue.total.toLocaleString()}</h3>
-          <p className="text-xs opacity-75 mt-2">
-            +${(stats.revenue.thisMonth - stats.revenue.lastMonth).toLocaleString()} this period
+          <p className="text-green-100 text-xs font-medium mb-1">Total Revenue</p>
+          <h3 className="text-3xl font-bold">${revenue.total.toLocaleString()}</h3>
+          <p className="text-green-200/70 text-xs mt-2">
+            +${(revenue.thisMonth - revenue.lastMonth).toLocaleString()} this period
           </p>
         </div>
 
-        {/* USERS CARD */}
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+        {/* Users */}
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-4">
-            <Users size={32} className="opacity-80" />
-            <div className="px-2 py-1 rounded-full text-xs font-medium bg-blue-700">
-              Active
+            <div className="p-2 bg-white/20 rounded-xl">
+              <Users size={22} />
             </div>
+            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-700/60">Active</span>
           </div>
-          <p className="text-sm opacity-90 mb-1">Total Users</p>
-          <h3 className="text-3xl font-bold">{stats.users.total.toLocaleString()}</h3>
-          <p className="text-xs opacity-75 mt-2">
-            +{stats.users.newThisMonth} new this period
-          </p>
+          <p className="text-blue-100 text-xs font-medium mb-1">Total Users</p>
+          <h3 className="text-3xl font-bold">{users.total.toLocaleString()}</h3>
+          <p className="text-blue-200/70 text-xs mt-2">+{users.newThisMonth} new this period</p>
         </div>
 
-        {/* BOOKINGS CARD */}
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+        {/* Bookings */}
+        <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-4">
-            <Calendar size={32} className="opacity-80" />
-            <div className="px-2 py-1 rounded-full text-xs font-medium bg-purple-700">
-              {stats.bookings.completedRate}%
+            <div className="p-2 bg-white/20 rounded-xl">
+              <Calendar size={22} />
             </div>
+            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-700/60">
+              {bookings.completedRate}%
+            </span>
           </div>
-          <p className="text-sm opacity-90 mb-1">Total Bookings</p>
-          <h3 className="text-3xl font-bold">{stats.bookings.total.toLocaleString()}</h3>
-          <p className="text-xs opacity-75 mt-2">
-            {stats.bookings.thisMonth} this period
-          </p>
+          <p className="text-purple-100 text-xs font-medium mb-1">Total Bookings</p>
+          <h3 className="text-3xl font-bold">{bookings.total.toLocaleString()}</h3>
+          <p className="text-purple-200/70 text-xs mt-2">{bookings.thisMonth} this period</p>
         </div>
 
-        {/* PROPERTIES CARD */}
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
+        {/* Properties */}
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-4">
-            <Home size={32} className="opacity-80" />
-            <div className="px-2 py-1 rounded-full text-xs font-medium bg-orange-700">
-              {stats.properties.occupancyRate}%
+            <div className="p-2 bg-white/20 rounded-xl">
+              <Home size={22} />
             </div>
+            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-orange-700/60">
+              {properties.occupancyRate}%
+            </span>
           </div>
-          <p className="text-sm opacity-90 mb-1">Active Properties</p>
-          <h3 className="text-3xl font-bold">{stats.properties.active}</h3>
-          <p className="text-xs opacity-75 mt-2">
-            of {stats.properties.total} total
-          </p>
+          <p className="text-orange-100 text-xs font-medium mb-1">Active Properties</p>
+          <h3 className="text-3xl font-bold">{properties.active}</h3>
+          <p className="text-orange-200/70 text-xs mt-2">of {properties.total} total</p>
         </div>
       </div>
 
-      {/* DETAILED BREAKDOWN */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* REVENUE BREAKDOWN */}
-        <div className="bg-white rounded-xl border shadow-sm p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <DollarSign className="text-green-600" size={20} />
+      {/* ── DETAILED BREAKDOWN ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        {/* Revenue Breakdown */}
+        <div className="rounded-2xl p-6"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 rounded-xl" style={{ background: "rgba(16,185,129,0.1)" }}>
+              <DollarSign size={18} style={{ color: "#10b981" }} />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">Revenue Breakdown</h2>
+            <h2 className="font-semibold" style={{ color: "var(--text)" }}>Revenue Breakdown</h2>
           </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600">This Month</p>
-                <p className="text-xl font-bold text-gray-900 mt-1">
-                  ${stats.revenue.thisMonth.toLocaleString()}
-                </p>
-              </div>
-              <TrendingUp className="text-green-600" size={24} />
-            </div>
 
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600">Last Month</p>
-                <p className="text-xl font-bold text-gray-900 mt-1">
-                  ${stats.revenue.lastMonth.toLocaleString()}
-                </p>
+          <div className="space-y-3">
+            {[
+              { label: "This Month",   value: `$${revenue.thisMonth.toLocaleString()}`, icon: TrendingUp,  iconColor: "#10b981" },
+              { label: "Last Month",   value: `$${revenue.lastMonth.toLocaleString()}`, icon: Activity,    iconColor: "var(--text2)" },
+            ].map(({ label, value, icon: Icon, iconColor }) => (
+              <div key={label} className="flex items-center justify-between p-4 rounded-xl"
+                style={{ background: "var(--bg)" }}>
+                <div>
+                  <p className="text-sm" style={{ color: "var(--text2)" }}>{label}</p>
+                  <p className="text-xl font-bold mt-1" style={{ color: "var(--text)" }}>{value}</p>
+                </div>
+                <Icon size={22} style={{ color: iconColor }} />
               </div>
-              <Activity className="text-gray-600" size={24} />
-            </div>
+            ))}
 
-            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200">
+            {/* Growth rate highlight */}
+            <div className="flex items-center justify-between p-4 rounded-xl"
+              style={{
+                background: revenue.growth >= 0 ? "rgba(16,185,129,0.06)" : "rgba(239,68,68,0.06)",
+                border: `1px solid ${revenue.growth >= 0 ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)"}`,
+              }}>
               <div>
-                <p className="text-sm text-green-700 font-medium">Growth Rate</p>
-                <p className="text-2xl font-bold text-green-700 mt-1">
-                  {stats.revenue.growth > 0 ? '+' : ''}{stats.revenue.growth}%
+                <p className="text-sm font-medium" style={{ color: revenue.growth >= 0 ? "#10b981" : "#ef4444" }}>
+                  Growth Rate
+                </p>
+                <p className="text-2xl font-bold mt-1" style={{ color: revenue.growth >= 0 ? "#10b981" : "#ef4444" }}>
+                  {revenue.growth > 0 ? "+" : ""}{revenue.growth}%
                 </p>
               </div>
-              {stats.revenue.growth >= 0 ? (
-                <TrendingUp className="text-green-600" size={28} />
-              ) : (
-                <TrendingDown className="text-red-600" size={28} />
-              )}
+              {revenue.growth >= 0
+                ? <TrendingUp size={26} style={{ color: "#10b981" }} />
+                : <TrendingDown size={26} style={{ color: "#ef4444" }} />
+              }
             </div>
           </div>
         </div>
 
-        {/* USER STATISTICS */}
-        <div className="bg-white rounded-xl border shadow-sm p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Users className="text-blue-600" size={20} />
+        {/* User Statistics */}
+        <div className="rounded-2xl p-6"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 rounded-xl" style={{ background: "rgba(59,130,246,0.1)" }}>
+              <Users size={18} style={{ color: "#3b82f6" }} />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">User Statistics</h2>
+            <h2 className="font-semibold" style={{ color: "var(--text)" }}>User Statistics</h2>
           </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex-1">
-                <p className="text-sm text-gray-600 mb-2">Active Users</p>
-                <p className="text-xl font-bold text-gray-900">{stats.users.activeUsers}</p>
+
+          <div className="space-y-3">
+            {/* Active users with ring */}
+            <div className="flex items-center justify-between p-4 rounded-xl"
+              style={{ background: "var(--bg)" }}>
+              <div>
+                <p className="text-sm" style={{ color: "var(--text2)" }}>Active Users</p>
+                <p className="text-xl font-bold mt-1" style={{ color: "var(--text)" }}>{users.activeUsers}</p>
               </div>
-              <div className="w-16 h-16 relative">
-                <svg className="transform -rotate-90 w-16 h-16">
-                  <circle
-                    cx="32"
-                    cy="32"
-                    r="28"
-                    stroke="#E5E7EB"
-                    strokeWidth="6"
-                    fill="none"
-                  />
-                  <circle
-                    cx="32"
-                    cy="32"
-                    r="28"
-                    stroke="#3B82F6"
-                    strokeWidth="6"
-                    fill="none"
-                    strokeDasharray={`${(stats.users.activeUsers / stats.users.total) * 175.93} 175.93`}
-                  />
+              <div className="w-14 h-14 relative flex-shrink-0">
+                <svg className="w-14 h-14 -rotate-90">
+                  <circle cx="28" cy="28" r="22" stroke="var(--border)" strokeWidth="5" fill="none" />
+                  <circle cx="28" cy="28" r="22" stroke="#3b82f6" strokeWidth="5" fill="none"
+                    strokeDasharray={`${(users.activeUsers / (users.total || 1)) * 138.2} 138.2`}
+                    strokeLinecap="round" />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-semibold text-gray-700">
-                    {Math.round((stats.users.activeUsers / stats.users.total) * 100)}%
-                  </span>
+                  <span className="text-xs font-bold" style={{ color: "var(--text)" }}>{engagementPct}%</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600">New This Period</p>
-                <p className="text-xl font-bold text-gray-900 mt-1">+{stats.users.newThisMonth}</p>
+            {[
+              { label: "New This Period", value: `+${users.newThisMonth}`, icon: ArrowUpRight, color: "#3b82f6" },
+              { label: "Total Registered", value: users.total, icon: Users, color: "var(--text2)" },
+            ].map(({ label, value, icon: Icon, color }) => (
+              <div key={label} className="flex items-center justify-between p-4 rounded-xl"
+                style={{ background: "var(--bg)" }}>
+                <div>
+                  <p className="text-sm" style={{ color: "var(--text2)" }}>{label}</p>
+                  <p className="text-xl font-bold mt-1" style={{ color: "var(--text)" }}>{value}</p>
+                </div>
+                <Icon size={22} style={{ color }} />
               </div>
-              <ArrowUpRight className="text-blue-600" size={24} />
-            </div>
-
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600">Total Registered</p>
-                <p className="text-xl font-bold text-gray-900 mt-1">{stats.users.total}</p>
-              </div>
-              <Users className="text-gray-600" size={24} />
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* PERFORMANCE METRICS */}
-      <div className="bg-white rounded-xl border shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Performance Metrics</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* BOOKING COMPLETION */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-gray-600">Booking Completion</p>
-              <span className="text-lg font-bold text-purple-600">{stats.bookings.completedRate}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-purple-500 to-purple-600 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${stats.bookings.completedRate}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              {Math.round((stats.bookings.total * stats.bookings.completedRate) / 100)} of {stats.bookings.total} completed
-            </p>
-          </div>
+      {/* ── PERFORMANCE METRICS ── */}
+      <div className="rounded-2xl p-6"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <h2 className="font-semibold mb-6" style={{ color: "var(--text)" }}>Performance Metrics</h2>
 
-          {/* PROPERTY OCCUPANCY */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-gray-600">Property Occupancy</p>
-              <span className="text-lg font-bold text-orange-600">{stats.properties.occupancyRate}%</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            {
+              label:   "Booking Completion",
+              pct:     bookings.completedRate,
+              detail:  `${Math.round((bookings.total * bookings.completedRate) / 100)} of ${bookings.total} completed`,
+              color:   "#8b5cf6",
+              track:   "rgba(139,92,246,0.15)",
+            },
+            {
+              label:   "Property Occupancy",
+              pct:     properties.occupancyRate,
+              detail:  `${properties.active} of ${properties.total} occupied`,
+              color:   "#f97316",
+              track:   "rgba(249,115,22,0.15)",
+            },
+            {
+              label:   "User Engagement",
+              pct:     engagementPct,
+              detail:  `${users.activeUsers} of ${users.total} active`,
+              color:   "#3b82f6",
+              track:   "rgba(59,130,246,0.15)",
+            },
+          ].map(({ label, pct, detail, color, track }) => (
+            <div key={label}>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium" style={{ color: "var(--text2)" }}>{label}</p>
+                <span className="text-base font-bold" style={{ color }}>{pct}%</span>
+              </div>
+              {/* Track */}
+              <div className="w-full h-2.5 rounded-full overflow-hidden" style={{ background: track }}>
+                <div
+                  className="h-2.5 rounded-full transition-all duration-700"
+                  style={{ width: `${pct}%`, background: color }}
+                />
+              </div>
+              <p className="text-xs mt-2" style={{ color: "var(--text2)" }}>{detail}</p>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-orange-500 to-orange-600 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${stats.properties.occupancyRate}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              {stats.properties.active} of {stats.properties.total} occupied
-            </p>
-          </div>
-
-          {/* USER ENGAGEMENT */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-gray-600">User Engagement</p>
-              <span className="text-lg font-bold text-blue-600">
-                {Math.round((stats.users.activeUsers / stats.users.total) * 100)}%
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${(stats.users.activeUsers / stats.users.total) * 100}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              {stats.users.activeUsers} of {stats.users.total} active
-            </p>
-          </div>
+          ))}
         </div>
       </div>
     </div>

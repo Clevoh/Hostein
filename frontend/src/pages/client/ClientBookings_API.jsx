@@ -1,330 +1,353 @@
-// src/pages/client/ClientBookings_API.jsx
-// REPLACES existing file
-// Changes vs original:
-//   - Added "Pay Now" button on unpaid/pending bookings
-//   - Added payment status badge next to booking status
-//   - Integrated PaymentModal
-
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import {
-  Calendar, MapPin, DollarSign, Clock,
-  Search, Filter, Home, CheckCircle, XCircle, CreditCard,
+  Calendar, MapPin, DollarSign, User, Trash2, CheckCircle,
+  XCircle, Clock, MessageCircle, Star, Loader2, Send, Info, Plus,
 } from "lucide-react";
-import { getMyBookings, cancelBooking } from "../../services/bookingService";
-import PaymentModal from "../../components/payment/PaymentModal";
+import PropertyChatWindow from "../../components/chat/PropertyChatWindow";
+import StarRating from "../../components/StarRating";
+
+const STATUS = {
+  pending:   { bg: "bg-yellow-50",  text: "text-yellow-700",  border: "border-yellow-100", icon: Clock },
+  confirmed: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-100",icon: CheckCircle },
+  completed: { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-100",   icon: CheckCircle },
+  cancelled: { bg: "bg-red-50",     text: "text-red-700",     border: "border-red-100",    icon: XCircle },
+};
+
+const FILTERS = [
+  { key: "all",       label: "All" },
+  { key: "pending",   label: "Pending" },
+  { key: "confirmed", label: "Confirmed" },
+  { key: "completed", label: "Completed" },
+  { key: "cancelled", label: "Cancelled" },
+];
+
+const fmt = (d) =>
+  d ? new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—";
 
 export default function ClientBookings() {
-  const [activeTab, setActiveTab]       = useState("all");
-  const [searchQuery, setSearchQuery]   = useState("");
-  const [bookings, setBookings]         = useState([]);
-  const [loading, setLoading]           = useState(true);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all");
+  const [chatBooking, setChatBooking] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [reviewBooking, setReviewBooking] = useState(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
-  // Payment modal state
-  const [payModal, setPayModal] = useState({
-    open: false,
-    booking: null,
-  });
+  useEffect(() => { fetchBookings(); fetchCurrentUser(); }, []);
 
-  useEffect(() => { loadBookings(); }, []);
-
-  const loadBookings = async () => {
+  const fetchCurrentUser = async () => {
     try {
-      setLoading(true);
-      const data = await getMyBookings();
-      setBookings(data);
-    } catch (error) {
-      console.error("Failed to load bookings:", error);
-    } finally {
-      setLoading(false);
-    }
+      const res = await fetch("${import.meta.env.VITE_API_URL}/api/users/profile", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const data = await res.json();
+      setCurrentUserId(data._id || data.id);
+    } catch {}
   };
 
-  const handleCancelBooking = async (bookingId) => {
-    if (!window.confirm("Are you sure you want to cancel this booking?")) return;
+  const fetchBookings = async () => {
     try {
-      await cancelBooking(bookingId);
-      await loadBookings();
-    } catch (error) {
-      alert("Failed to cancel booking: " + (error.response?.data?.message || error.message));
-    }
+      const res = await fetch("${import.meta.env.VITE_API_URL}/api/bookings/my-bookings", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const data = await res.json();
+      setBookings(data.success && Array.isArray(data.bookings) ? data.bookings : Array.isArray(data) ? data : []);
+    } catch { setBookings([]); } finally { setLoading(false); }
   };
 
-  const handlePaymentSuccess = () => {
-    setPayModal({ open: false, booking: null });
-    loadBookings(); // refresh to show updated paymentStatus
+  const handleDelete = async (id) => {
+    if (!confirm("Delete this booking?")) return;
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/bookings/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+    if (res.ok) setBookings((prev) => prev.filter((b) => b._id !== id));
+    else alert((await res.json()).message || "Failed to delete");
   };
 
-  const getStatusBadge = (status) => {
-    const badges = {
-      confirmed: { icon: CheckCircle, text: "Confirmed", className: "bg-green-100 text-green-700 border-green-200" },
-      pending:   { icon: Clock,        text: "Pending",   className: "bg-yellow-100 text-yellow-700 border-yellow-200" },
-      completed: { icon: CheckCircle,  text: "Completed", className: "bg-blue-100 text-blue-700 border-blue-200" },
-      cancelled: { icon: XCircle,      text: "Cancelled", className: "bg-red-100 text-red-700 border-red-200" },
-    };
-    const badge = badges[status] || badges.pending;
-    const Icon  = badge.icon;
-    return (
-      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${badge.className}`}>
-        <Icon size={14} />
-        {badge.text}
-      </span>
-    );
+  const handleSubmitReview = async () => {
+    if (!reviewRating) { alert("Please select a rating"); return; }
+    try {
+      setSubmittingReview(true);
+      const res = await fetch("${import.meta.env.VITE_API_URL}/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
+        body: JSON.stringify({
+          bookingId: reviewBooking._id,
+          propertyId: reviewBooking.property?._id,
+          rating: reviewRating,
+          comment: reviewComment,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.message || "Failed to submit review"); return; }
+      setReviewBooking(null);
+      setReviewRating(0);
+      setReviewComment("");
+      fetchBookings();
+    } catch {} finally { setSubmittingReview(false); }
   };
 
-  const getPaymentBadge = (paymentStatus) => {
-    if (paymentStatus === "paid")
-      return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">✓ Paid</span>;
-    if (paymentStatus === "partial")
-      return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">Partial</span>;
-    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Unpaid</span>;
-  };
-
-  const formatDate = (dateString) => new Date(dateString).toLocaleDateString("en-US", {
-    month: "short", day: "numeric", year: "numeric",
-  });
-
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return "https://via.placeholder.com/600";
-    if (imagePath.startsWith("http")) return imagePath;
-    return `http://localhost:5000${imagePath}`;
-  };
-
-  const filteredBookings = bookings.filter((booking) => {
-    const matchesSearch =
-      booking.property?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.property?.city?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab =
-      activeTab === "all" ||
-      (activeTab === "upcoming" && ["confirmed", "pending"].includes(booking.status)) ||
-      (activeTab === "past"     && ["completed", "cancelled"].includes(booking.status));
-    return matchesSearch && matchesTab;
-  });
-
-  const tabs = [
-    { id: "all",      label: "All Bookings", count: bookings.length },
-    { id: "upcoming", label: "Upcoming",     count: bookings.filter(b => ["confirmed","pending"].includes(b.status)).length },
-    { id: "past",     label: "Past",         count: bookings.filter(b => ["completed","cancelled"].includes(b.status)).length },
-  ];
+  const filtered = bookings.filter((b) => filter === "all" || b.status === filter);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading bookings...</p>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-2 border-slate-200 border-t-slate-700 animate-spin" />
+          <p className="text-slate-500 text-sm">Loading bookings…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Bookings</h1>
-          <p className="text-gray-600 mt-1">View and manage all your property bookings</p>
-        </div>
-        <Link
-          to="/rentals"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
-        >
-          <Home size={18} />
-          Find a Home
-        </Link>
-      </div>
-
-      {/* SEARCH */}
-      <div className="bg-white rounded-xl border shadow-sm p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search bookings by property or location..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            />
+    <>
+      <div className="space-y-5 pb-8">
+        {/* ── HEADER ── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text)" }}>My Bookings</h1>
+            <p className="text-sm mt-0.5" style={{ color: "var(--text2)" }}>View and manage your property bookings</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-            <Filter size={18} />
-            <span className="font-medium">Filters</span>
+          <button
+            onClick={() => (window.location.href = "/rentals")}
+            className="self-start sm:self-auto flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-700 text-white rounded-xl font-medium text-sm transition shadow-sm"
+          >
+            <Plus size={15} /> Book Property
           </button>
         </div>
-      </div>
 
-      {/* TABS */}
-      <div className="border-b">
-        <div className="flex gap-6">
-          {tabs.map((tab) => (
+        {/* Review notice */}
+        <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-2xl p-4 text-sm text-blue-700">
+          <Info size={16} className="mt-0.5 flex-shrink-0 text-blue-500" />
+          <p>Reviews can only be left for <strong>Completed</strong> bookings — after your stay has ended and been confirmed by the host.</p>
+        </div>
+
+        {/* ── FILTER TABS ── */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {FILTERS.map(({ key, label }) => (
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`pb-3 px-1 font-medium text-sm transition-colors relative ${
-                activeTab === tab.id ? "text-blue-600" : "text-gray-600 hover:text-gray-900"
+              key={key}
+              onClick={() => setFilter(key)}
+              className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition ${
+                filter === key
+                  ? "bg-slate-900 text-white"
+                  : "border hover:border-slate-300"
               }`}
+              style={filter !== key ? { background: "var(--surface)", borderColor: "var(--border)", color: "var(--text2)" } : {}}
             >
-              {tab.label}
-              <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
-                activeTab === tab.id ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
-              }`}>
-                {tab.count}
+              {label}
+              <span className={`ml-1.5 text-xs ${filter === key ? "text-white/60" : ""}`}
+                    style={filter !== key ? { color: "var(--text2)" } : {}}>
+                ({key === "all" ? bookings.length : bookings.filter((b) => b.status === key).length})
               </span>
-              {activeTab === tab.id && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
-              )}
             </button>
           ))}
         </div>
-      </div>
 
-      {/* BOOKINGS LIST */}
-      {filteredBookings.length > 0 ? (
-        <div className="space-y-4">
-          {filteredBookings.map((booking) => (
-            <div key={booking._id} className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-all overflow-hidden">
-              <div className="flex flex-col md:flex-row">
-                {/* IMAGE */}
-                <div className="md:w-64 h-48 md:h-auto">
-                  <img
-                    src={getImageUrl(booking.property?.images?.[0])}
-                    alt={booking.property?.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+        {/* ── BOOKING CARDS ── */}
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center border rounded-2xl" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+            <div className="w-16 h-16 bg-slate-100 rounded-3xl flex items-center justify-center mb-4">
+              <Calendar size={28} className="text-slate-300" />
+            </div>
+            <h3 className="font-bold mb-1" style={{ color: "var(--text)" }}>
+              {filter === "all" ? "No bookings yet" : `No ${filter} bookings`}
+            </h3>
+            <p className="text-sm mb-5" style={{ color: "var(--text2)" }}>
+              {filter === "all" ? "Browse properties and make your first booking" : ""}
+            </p>
+            <button
+              onClick={() => (window.location.href = "/rentals")}
+              className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-700 transition"
+            >
+              Browse Properties
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filtered.map((booking) => {
+              const s = STATUS[booking.status] || STATUS.pending;
+              const StatusIcon = s.icon;
+              const canReview = booking.status === "completed" && !booking.review;
+              const reviewed = !!booking.review;
 
-                {/* CONTENT */}
-                <div className="flex-1 p-6">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-1">
+              return (
+                <div
+                  key={booking._id}
+                  className="rounded-2xl border shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                  style={{ background: "var(--surface)", borderColor: "var(--border)" }}
+                >
+                  {/* Card header */}
+                  <div className="flex items-start justify-between gap-3 p-5 md:p-6">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold truncate" style={{ color: "var(--text)" }}>
                         {booking.property?.title || "Property"}
                       </h3>
-                      <p className="text-gray-600 flex items-center gap-1">
-                        <MapPin size={16} />
+                      <p className="text-xs flex items-center gap-1 mt-0.5" style={{ color: "var(--text2)" }}>
+                        <MapPin size={11} />
+                        {booking.unit?.unitNumber ? `Unit ${booking.unit.unitNumber} · ` : ""}
                         {booking.property?.city || "Location"}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
-                      {getStatusBadge(booking.status)}
-                      {getPaymentBadge(booking.paymentStatus)}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Check-in</p>
-                      <p className="font-medium text-gray-900 flex items-center gap-1">
-                        <Calendar size={14} className="text-gray-400" />
-                        {formatDate(booking.checkIn)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Check-out</p>
-                      <p className="font-medium text-gray-900 flex items-center gap-1">
-                        <Calendar size={14} className="text-gray-400" />
-                        {formatDate(booking.checkOut)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Duration</p>
-                      <p className="font-medium text-gray-900 flex items-center gap-1">
-                        <Clock size={14} className="text-gray-400" />
-                        {booking.nights} nights
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Total Amount</p>
-                      <p className="font-medium text-gray-900 flex items-center gap-1">
-                        <DollarSign size={14} className="text-gray-400" />
-                        {booking.amount?.toLocaleString()} KSh
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 mt-4 pt-4 border-t">
-                    <span className="text-sm text-gray-500">
-                      Booked on {formatDate(booking.bookingDate || booking.createdAt)}
-                    </span>
-                    {booking.unit && (
-                      <>
-                        <span className="text-sm text-gray-300">•</span>
-                        <span className="text-sm text-gray-500">Unit {booking.unit.unitNumber}</span>
-                      </>
-                    )}
-                  </div>
-
-                  {/* ACTIONS */}
-                  <div className="flex flex-wrap gap-3 mt-4">
-                    {/* PAY NOW — show if booking is not cancelled and not yet paid */}
-                    {booking.status !== "cancelled" && booking.paymentStatus !== "paid" && (
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold border ${s.bg} ${s.text} ${s.border}`}>
+                        <StatusIcon size={11} />
+                        <span className="capitalize">{booking.status}</span>
+                      </span>
                       <button
-                        onClick={() => setPayModal({ open: true, booking })}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium"
+                        onClick={() => handleDelete(booking._id)}
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition"
                       >
-                        <CreditCard size={16} />
-                        Pay Now
+                        <Trash2 size={15} />
                       </button>
-                    )}
+                    </div>
+                  </div>
 
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                      View Details
+                  {/* Details row */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-5 md:px-6 py-4 border-y" style={{ background: "var(--bg)", borderColor: "var(--border)" }}>
+                    {[
+                      { icon: Calendar, label: "Check-in",   value: fmt(booking.checkIn || booking.checkInDate) },
+                      { icon: Calendar, label: "Check-out",  value: fmt(booking.checkOut || booking.checkOutDate) },
+                      { icon: User,     label: "Guests",     value: booking.numberOfGuests || booking.guests || 1 },
+                      { icon: DollarSign, label: "Total",    value: `${booking.amount || booking.totalPrice || 0} ${booking.currency || "RWF"}` },
+                    ].map(({ icon: Icon, label, value }) => (
+                      <div key={label} className="flex items-start gap-2">
+                        <Icon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs font-medium" style={{ color: "var(--text2)" }}>{label}</p>
+                          <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>{value}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between flex-wrap gap-3 px-5 md:px-6 py-4">
+                    <button
+                      onClick={() => (window.location.href = `/property/${booking.property?._id}`)}
+                      className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      View property →
                     </button>
 
-                    {booking.status === "confirmed" && (
-                      <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
-                        Modify Booking
-                      </button>
-                    )}
-
-                    {["pending", "confirmed"].includes(booking.status) && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {canReview && (
+                        <button
+                          onClick={() => { setReviewBooking(booking); setReviewRating(0); setReviewComment(""); }}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-100 rounded-xl font-medium text-xs transition"
+                        >
+                          <Star size={13} /> Leave Review
+                        </button>
+                      )}
+                      {reviewed && (
+                        <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl text-xs font-medium">
+                          <Star size={13} className="fill-emerald-600" /> Reviewed
+                        </div>
+                      )}
+                      {!canReview && !reviewed && booking.status !== "cancelled" && (
+                        <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 text-slate-400 border border-slate-100 rounded-xl text-xs cursor-not-allowed">
+                          <Star size={13} /> Review after stay
+                        </div>
+                      )}
                       <button
-                        onClick={() => handleCancelBooking(booking._id)}
-                        className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium"
+                        onClick={() => setChatBooking(booking)}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100 rounded-xl font-medium text-xs transition"
                       >
-                        Cancel
+                        <MessageCircle size={13} /> Message Host
                       </button>
-                    )}
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl border p-12 text-center">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Calendar className="text-gray-400" size={32} />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {searchQuery ? "No bookings found" : activeTab === "upcoming" ? "No upcoming bookings" : activeTab === "past" ? "No past bookings" : "No bookings yet"}
-          </h3>
-          <p className="text-gray-600 mb-6">
-            {searchQuery ? "Try adjusting your search criteria" : "Start exploring amazing properties and make your first booking"}
-          </p>
-          <Link to="/rentals" className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-            <Home size={18} />
-            Browse Available Homes
-          </Link>
-        </div>
-      )}
 
-      {/* PAYMENT MODAL */}
-      {payModal.open && payModal.booking && (
-        <PaymentModal
-          isOpen={payModal.open}
-          onClose={() => setPayModal({ open: false, booking: null })}
-          onSuccess={handlePaymentSuccess}
-          paymentType="booking"
-          referenceId={payModal.booking._id}
-          amount={payModal.booking.amount}
-          currency="KES"
-          title="Pay for Booking"
-          description={`${payModal.booking.property?.title} — ${payModal.booking.nights} nights`}
+                  {/* Existing review */}
+                  {booking.review && (
+                    <div className="mx-5 md:mx-6 mb-5 border rounded-xl p-4" style={{ background: "var(--bg)", borderColor: "var(--border)" }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold" style={{ color: "var(--text)" }}>Your review</p>
+                        <StarRating value={booking.review.rating || 0} readonly size={13} />
+                      </div>
+                      <p className="text-sm" style={{ color: "var(--text2)" }}>{booking.review.comment}</p>
+                      {booking.review.reply && (
+                        <div className="mt-3 border rounded-xl p-3" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+                          <p className="text-xs font-semibold text-blue-600 mb-1">Host reply</p>
+                          <p className="text-sm" style={{ color: "var(--text)" }}>{booking.review.reply}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── CHAT ── */}
+      {chatBooking && currentUserId && (
+        <PropertyChatWindow
+          booking={chatBooking}
+          currentUserId={currentUserId}
+          onClose={() => setChatBooking(null)}
         />
       )}
-    </div>
+
+      {/* ── REVIEW MODAL ── */}
+      {reviewBooking && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={(e) => e.target === e.currentTarget && setReviewBooking(null)}
+        >
+          <div className="rounded-2xl p-6 max-w-md w-full shadow-2xl" style={{ background: "var(--surface)" }}>
+            <h3 className="text-lg font-bold mb-1" style={{ color: "var(--text)" }}>Leave a Review</h3>
+            <p className="text-sm mb-1" style={{ color: "var(--text2)" }}>{reviewBooking.property?.title}</p>
+            <div className="flex items-center gap-1.5 text-xs mb-5" style={{ color: "var(--text2)" }}>
+              <CheckCircle size={11} className="text-blue-400" />
+              Verified stay · #{reviewBooking._id?.slice(-6).toUpperCase()}
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text)" }}>Rating *</label>
+                <StarRating value={reviewRating} onChange={setReviewRating} size={26} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text)" }}>Your experience</label>
+                <textarea
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  rows={4}
+                  className="w-full border rounded-xl px-4 py-3 text-sm outline-none focus:border-slate-400 transition resize-none"
+                  style={{
+                    background: "var(--bg)",
+                    borderColor: "var(--border)",
+                    color: "var(--text)",
+                  }}
+                  placeholder="What did you love? What could be improved?"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setReviewBooking(null)}
+                  className="flex-1 px-4 py-2.5 border rounded-xl text-sm font-medium hover:bg-slate-50 transition"
+                  style={{ borderColor: "var(--border)", color: "var(--text)" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmitReview}
+                  disabled={submittingReview || !reviewRating}
+                  className="flex-1 px-4 py-2.5 bg-slate-900 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium text-sm transition flex items-center justify-center gap-2"
+                >
+                  {submittingReview ? <><Loader2 size={14} className="animate-spin" /> Submitting…</> : <><Send size={14} /> Submit</>}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

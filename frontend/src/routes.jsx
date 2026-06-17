@@ -4,6 +4,7 @@ import { Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import NotificationTest from "./pages/NotificationTest";
 
 // PUBLIC PAGES
 import RentalsPage from "./pages/public/RentalsPage";
@@ -20,6 +21,7 @@ import PropertiesPage from "./pages/properties/PropertiesPage";
 import AllUnitsPage from "./pages/units/AllUnitsPage";
 import PropertyUnitsPage from "./pages/units/PropertyUnitsPage";
 import TenantsPage from "./pages/tenants/TenantsPage";
+import HostBookings from "./pages/dashboard/HostBookings";
 
 /* CLIENT */
 import ClientLayout from "./layouts/client/ClientLayout";
@@ -50,6 +52,7 @@ export default function AppRoutes() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/test-notifications" element={<NotificationTest />} />
 
       {/* PUBLIC RENTAL BROWSING */}
       <Route path="/rentals" element={<RentalsPage />} />
@@ -68,6 +71,7 @@ export default function AppRoutes() {
           <Route path="units" element={<AllUnitsPage />} />
           <Route path="properties/:propertyId/units" element={<PropertyUnitsPage />} />
           <Route path="tenants" element={<TenantsPage />} />
+          <Route path="bookings" element={<HostBookings />} />
         </Route>
       </Route>
 

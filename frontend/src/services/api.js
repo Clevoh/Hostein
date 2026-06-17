@@ -1,29 +1,39 @@
+// frontend/src/services/api.js
+
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: `${import.meta.env.VITE_API_URL}/api`,
 });
 
-// Add token to requestscd ..
+//  Attach token to EVERY request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
 
-// Handle 401 errors WITHOUT forcing redirect (let components handle it)
+//  Handle errors SAFELY (no auto-destroy)
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    // Only clear auth if it's actually an auth error, not a network error
     if (err.response?.status === 401) {
-      // Don't redirect here - let the components handle it
-      // This prevents infinite loops
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      console.warn("Unauthorized request detected");
+
+    
+      //  NEW: only log warning
+
+      // Optional: only clear if login fails
+      if (err.config.url.includes("/auth")) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
     }
+
     return Promise.reject(err);
   }
 );

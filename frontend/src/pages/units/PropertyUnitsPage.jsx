@@ -228,7 +228,7 @@ export default function PropertyUnitsPage() {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith("http")) return imagePath;
-    return `http://localhost:5000${imagePath}`;
+    return `${import.meta.env.VITE_API_URL}${imagePath}`;
   };
 
   // 🆕 Shared meal plan fields (used in both Add and Edit forms)

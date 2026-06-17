@@ -11,7 +11,7 @@ exports.getDashboardStats = async (req, res) => {
     const totalUnits = await Unit.countDocuments();
     const occupiedUnits = await Unit.countDocuments({ isOccupied: true });
     const emptyUnits = totalUnits - occupiedUnits;
-    const totalTenants = await Tenant.countDocuments({ isActive: true });
+    const totalTenants = await Tenant.countDocuments({ status: "active" });
 
     // LAST 12 MONTHS REVENUE
     const oneYearAgo = new Date();
@@ -75,13 +75,15 @@ exports.getDashboardStats = async (req, res) => {
     const latestTenants = await Tenant.find()
       .sort({ createdAt: -1 })
       .limit(5)
-      .populate("unit property");
+      .populate("unit")
+      .populate("property");
 
-    // RECENT BOOKINGS
+    // RECENT BOOKINGS - Fixed: Only populate fields that exist in the schema
     const latestBookings = await Booking.find()
       .sort({ createdAt: -1 })
       .limit(5)
-      .populate("property guest");
+      .populate("property");
+      // Removed .populate("guest") since it's not in the Booking schema
 
     res.status(200).json({
       totals: {
@@ -103,6 +105,7 @@ exports.getDashboardStats = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("Dashboard stats error:", error);
     res.status(500).json({ message: error.message });
   }
 };

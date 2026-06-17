@@ -30,7 +30,7 @@ export default function Signup() {
     try {
       setLoading(true);
 
-      await api.post("/users/register", {
+      await api.post("/auth/register", {
         name: form.name,
         email: form.email,
         password: form.password,
@@ -45,10 +45,16 @@ export default function Signup() {
     }
   };
 
+  const inputStyle = {
+    border: "1px solid var(--border)",
+    background: "var(--bg)",
+    color: "var(--text)",
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="bg-white shadow-xl rounded-2xl max-w-md w-full p-8">
-        <h2 className="text-2xl font-semibold mb-4">Create account</h2>
+    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: "var(--bg)" }}>
+      <div className="shadow-xl rounded-2xl max-w-md w-full p-8" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <h2 className="text-2xl font-semibold mb-4" style={{ color: "var(--text)" }}>Create account</h2>
 
         {error && (
           <div className="mb-4 text-red-600 bg-red-50 p-3 rounded">
@@ -61,7 +67,8 @@ export default function Signup() {
             name="name"
             onChange={handleChange}
             placeholder="Full name"
-            className="w-full p-3 border rounded"
+            className="w-full p-3 rounded"
+            style={inputStyle}
             required
           />
 
@@ -70,7 +77,8 @@ export default function Signup() {
             type="email"
             onChange={handleChange}
             placeholder="Email"
-            className="w-full p-3 border rounded"
+            className="w-full p-3 rounded"
+            style={inputStyle}
             required
           />
 
@@ -78,7 +86,8 @@ export default function Signup() {
             name="role"
             value={form.role}
             onChange={handleChange}
-            className="w-full p-3 border rounded"
+            className="w-full p-3 rounded"
+            style={inputStyle}
           >
             <option value="client">Client / Tenant</option>
             <option value="host">Host / Landlord</option>
@@ -90,7 +99,8 @@ export default function Signup() {
             type="password"
             onChange={handleChange}
             placeholder="Password"
-            className="w-full p-3 border rounded"
+            className="w-full p-3 rounded"
+            style={inputStyle}
             required
           />
 
@@ -99,7 +109,8 @@ export default function Signup() {
             type="password"
             onChange={handleChange}
             placeholder="Confirm password"
-            className="w-full p-3 border rounded"
+            className="w-full p-3 rounded"
+            style={inputStyle}
             required
           />
 

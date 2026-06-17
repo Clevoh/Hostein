@@ -15,6 +15,8 @@ exports.createUnit = async (req, res) => {
       bathrooms,
       rentAmount,
       property,
+      mealPlanType,
+      mealPlanCost,
     } = req.body;
 
     //  Validate required fields
@@ -46,6 +48,9 @@ exports.createUnit = async (req, res) => {
       });
     }
 
+    //  Handle uploaded images
+    const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+
     const unit = await Unit.create({
       unitNumber,
       unitType,
@@ -53,6 +58,9 @@ exports.createUnit = async (req, res) => {
       bathrooms: Number(bathrooms),
       rentAmount: Number(rentAmount),
       property,
+      mealPlanType: mealPlanType || "none",
+      mealPlanCost: Number(mealPlanCost) || 0,
+      images, //  Add images array
     });
 
     res.status(201).json(unit);
@@ -67,6 +75,7 @@ exports.createUnit = async (req, res) => {
     console.error("CREATE UNIT ERROR:", error);
     res.status(500).json({
       message: "Failed to create unit",
+      error: error.message,
     });
   }
 };
@@ -77,7 +86,7 @@ exports.createUnit = async (req, res) => {
 exports.getUnits = async (req, res) => {
   try {
     const units = await Unit.find()
-      .populate("property", "title")
+      .populate("property", "title city images")
       .populate("tenant", "name");
 
     res.status(200).json(units);
@@ -142,15 +151,26 @@ exports.updateUnit = async (req, res) => {
       return res.status(400).json({ message: "Invalid unit ID" });
     }
 
-    const unit = await Unit.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-
+    const unit = await Unit.findById(req.params.id);
     if (!unit) {
       return res.status(404).json({ message: "Unit not found" });
     }
+
+    //  Handle new uploaded images
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map(file => `/uploads/${file.filename}`);
+      // Append new images to existing ones
+      unit.images = [...(unit.images || []), ...newImages];
+    }
+
+    // Update other fields
+    Object.keys(req.body).forEach(key => {
+      if (key !== 'images') {
+        unit[key] = req.body[key];
+      }
+    });
+
+    await unit.save();
 
     res.status(200).json(unit);
   } catch (error) {

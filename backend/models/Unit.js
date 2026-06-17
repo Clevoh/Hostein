@@ -75,9 +75,9 @@ const unitSchema = new mongoose.Schema(
       default: null,
     },
 
-    image: {
-      type: String,
-      default: null,
+    images: {
+      type: [String],
+      default: [],
     },
   },
   { timestamps: true }

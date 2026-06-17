@@ -27,7 +27,17 @@ const propertySchema = new mongoose.Schema(
     amenities: [String],
     isAvailable: { type: Boolean, default: true },
 
-    //  HOSTEL FIELDS
+    // ⭐ NEW: REVIEW SYSTEM
+    avgRating: {
+      type: Number,
+      default: 0,
+    },
+    reviewCount: {
+      type: Number,
+      default: 0,
+    },
+
+    // HOSTEL FIELDS
     hostelType: {
       type: String,
       enum: ["accommodation_only", "meals_included", "mixed"],

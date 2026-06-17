@@ -9,7 +9,7 @@ export default function PropertyDetailsModal({ property, onClose }) {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
-    return `http://localhost:5000${imagePath}`;
+    return `${import.meta.env.VITE_API_URL}${imagePath}`;
   };
 
   const images = property.images || [];

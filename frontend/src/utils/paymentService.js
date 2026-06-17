@@ -1,7 +1,7 @@
 // src/utils/paymentService.js
 // All payment API calls in one place
 
-const BASE = "http://localhost:5000/api";
+const BASE = "${import.meta.env.VITE_API_URL}/api";
 
 const authHeaders = () => ({
   "Content-Type": "application/json",

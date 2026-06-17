@@ -1,245 +1,206 @@
 import { useState, useEffect } from "react";
-import { Search, Home, MapPin, DollarSign, Eye } from "lucide-react";
+import { Search, Home, MapPin, DollarSign, CheckCircle, XCircle, Clock, Trash2 } from "lucide-react";
 import { getAllProperties, updatePropertyStatus, deleteProperty } from "../../services/adminService";
+
+const STATUS_STYLE = {
+  active:   { cls: "bg-emerald-50 text-emerald-700 border-emerald-100", icon: CheckCircle },
+  pending:  { cls: "bg-amber-50 text-amber-700 border-amber-100",       icon: Clock },
+  inactive: { cls: "bg-slate-100 text-slate-600 border-slate-200",      icon: XCircle },
+  rejected: { cls: "bg-red-50 text-red-600 border-red-100",             icon: XCircle },
+};
+
+const getImageUrl = (p) => {
+  if (!p) return "https://placehold.co/600x400/1e293b/475569?text=No+Image";
+  return p.startsWith("http") ? p : `${import.meta.env.VITE_API_URL}${p}`;
+};
 
 export default function PropertiesPage() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  useEffect(() => {
-    loadProperties();
-  }, [statusFilter]);
+  useEffect(() => { load(); }, [statusFilter]);
 
-  const loadProperties = async () => {
+  const load = async () => {
     try {
       setLoading(true);
       const filters = {};
       if (statusFilter !== "all") filters.status = statusFilter;
-      if (searchQuery) filters.search = searchQuery;
-      
-      const data = await getAllProperties(filters);
-      setProperties(data);
-    } catch (error) {
-      console.error("Failed to load properties:", error);
-    } finally {
-      setLoading(false);
-    }
+      if (search) filters.search = search;
+      setProperties(await getAllProperties(filters));
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
-  const handleUpdateStatus = async (propertyId, newStatus) => {
-    try {
-      await updatePropertyStatus(propertyId, newStatus);
-      loadProperties();
-    } catch (error) {
-      alert("Failed to update property status");
-    }
+  const updateStatus = async (id, status) => {
+    try { await updatePropertyStatus(id, status); load(); }
+    catch { alert("Failed to update status"); }
   };
 
-  const handleDeleteProperty = async (propertyId) => {
-    if (!window.confirm("Are you sure you want to delete this property?")) return;
-    
-    try {
-      await deleteProperty(propertyId);
-      loadProperties();
-    } catch (error) {
-      alert("Failed to delete property");
-    }
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this property?")) return;
+    try { await deleteProperty(id); load(); }
+    catch { alert("Failed to delete property"); }
   };
 
-  const getStatusBadge = (status) => {
-    const badges = {
-      active: "bg-green-100 text-green-700 border-green-200",
-      pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
-      inactive: "bg-gray-100 text-gray-700 border-gray-200",
-      rejected: "bg-red-100 text-red-700 border-red-200",
-    };
-    return badges[status] || badges.pending;
-  };
-
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return "https://via.placeholder.com/300";
-    if (imagePath.startsWith("http")) return imagePath;
-    return `http://localhost:5000${imagePath}`;
-  };
-
-  const filteredProperties = properties.filter((property) =>
-    property.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    property.city?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filtered = properties.filter(p =>
+    p.title?.toLowerCase().includes(search.toLowerCase()) ||
+    p.city?.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="w-10 h-10 rounded-full border-2 animate-spin"
+        style={{ borderColor: "var(--border)", borderTopColor: "#ef4444" }} />
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
-      {/* HEADER */}
+    <div className="space-y-5 pb-8">
+      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Property Management</h1>
-        <p className="text-gray-600 mt-1">Monitor all properties listed on the platform</p>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text)" }}>Property Management</h1>
+        <p className="text-sm mt-0.5" style={{ color: "var(--text2)" }}>Monitor all properties listed on the platform</p>
       </div>
 
-      {/* FILTERS */}
-      <div className="bg-white rounded-xl border shadow-sm p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={20}
-            />
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Total",    value: properties.length,                                      color: "var(--text)" },
+          { label: "Active",   value: properties.filter(p => p.status === "active").length,   color: "#10b981" },
+          { label: "Pending",  value: properties.filter(p => p.status === "pending").length,  color: "#f59e0b" },
+          { label: "Inactive", value: properties.filter(p => p.status === "inactive").length, color: "var(--text2)" },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="rounded-2xl p-4"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            <p className="text-xs font-medium mb-1" style={{ color: "var(--text2)" }}>{label}</p>
+            <p className="text-2xl font-bold" style={{ color }}>{value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Search / filter bar */}
+      <div className="rounded-2xl p-4"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--text2)" }} />
             <input
               type="text"
-              placeholder="Search properties..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && loadProperties()}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
+              placeholder="Search by title or city…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && load()}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none"
+              style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)" }}
             />
           </div>
-
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
+            className="px-4 py-2.5 rounded-xl text-sm focus:outline-none"
+            style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)" }}
           >
             <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="pending">Pending</option>
-            <option value="inactive">Inactive</option>
+            {["active","pending","inactive"].map(s => (
+              <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+            ))}
           </select>
-
           <button
-            onClick={loadProperties}
-            className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            onClick={load}
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
+            style={{ background: "#ef4444" }}
+            onMouseEnter={(e) => e.currentTarget.style.background = "#dc2626"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "#ef4444"}
           >
             Search
           </button>
         </div>
       </div>
 
-      {/* STATS */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg border">
-          <p className="text-sm text-gray-600">Total Properties</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{properties.length}</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border">
-          <p className="text-sm text-gray-600">Active</p>
-          <p className="text-2xl font-bold text-green-600 mt-1">
-            {properties.filter((p) => p.status === "active").length}
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border">
-          <p className="text-sm text-gray-600">Pending</p>
-          <p className="text-2xl font-bold text-yellow-600 mt-1">
-            {properties.filter((p) => p.status === "pending").length}
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border">
-          <p className="text-sm text-gray-600">Inactive</p>
-          <p className="text-2xl font-bold text-gray-600 mt-1">
-            {properties.filter((p) => p.status === "inactive").length}
-          </p>
-        </div>
-      </div>
-
-      {/* PROPERTIES GRID */}
-      {filteredProperties.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProperties.map((property) => (
-            <div
-              key={property._id}
-              className="bg-white rounded-xl border shadow-sm hover:shadow-md transition-all overflow-hidden"
-            >
-              {/* IMAGE */}
-              <div className="h-48 overflow-hidden">
-                <img
-                  src={getImageUrl(property.images?.[0])}
-                  alt={property.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              {/* CONTENT */}
-              <div className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900 text-lg">{property.title}</h3>
-                  <span
-                    className={`inline-flex px-2 py-1 rounded-full text-xs font-medium border ${getStatusBadge(
-                      property.status
-                    )}`}
-                  >
-                    {property.status}
-                  </span>
+      {/* Grid */}
+      {filtered.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((p) => {
+            const st = STATUS_STYLE[p.status] || STATUS_STYLE.pending;
+            const StatusIcon = st.icon;
+            return (
+              <div
+                key={p._id}
+                className="rounded-2xl overflow-hidden transition-shadow hover:shadow-md"
+                style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+              >
+                {/* Image */}
+                <div className="h-44 overflow-hidden bg-slate-800 relative">
+                  <img
+                    src={getImageUrl(p.images?.[0])}
+                    alt={p.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-3 right-3">
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border capitalize ${st.cls}`}>
+                      <StatusIcon size={11} />{p.status}
+                    </span>
+                  </div>
                 </div>
 
-                <p className="text-sm text-gray-600 flex items-center gap-1 mb-3">
-                  <MapPin size={14} />
-                  {property.city}, {property.country}
-                </p>
+                {/* Body */}
+                <div className="p-4">
+                  <h3 className="font-semibold text-sm mb-1 truncate" style={{ color: "var(--text)" }}>{p.title}</h3>
+                  <p className="text-xs flex items-center gap-1 mb-3" style={{ color: "var(--text2)" }}>
+                    <MapPin size={11} /> {p.city}, {p.country}
+                  </p>
 
-                <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
-                  <span className="flex items-center gap-1">
-                    <DollarSign size={14} />
-                    {property.price}/mo
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Home size={14} />
-                    {property.units?.length || 0} units
-                  </span>
-                </div>
+                  <div className="flex items-center justify-between text-xs mb-3" style={{ color: "var(--text2)" }}>
+                    <span className="flex items-center gap-1"><DollarSign size={11} />{p.price || "—"}/mo</span>
+                    <span className="flex items-center gap-1"><Home size={11} />{p.units?.length || 0} units</span>
+                    <span>Host: {p.owner?.name || "—"}</span>
+                  </div>
 
-                <div className="text-xs text-gray-500 mb-3">
-                  <p>Host: {property.owner?.name || "Unknown"}</p>
-                  <p>Listed: {new Date(property.createdAt).toLocaleDateString()}</p>
-                </div>
-
-                {/* ACTIONS */}
-                <div className="flex gap-2">
-                  {property.status === "pending" && (
-                    <>
-                      <button
-                        onClick={() => handleUpdateStatus(property._id, "active")}
-                        className="flex-1 px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                      >
-                        Approve
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
+                    {p.status === "pending" && (
+                      <>
+                        <button onClick={() => updateStatus(p._id, "active")}
+                          className="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition">
+                          Approve
+                        </button>
+                        <button onClick={() => updateStatus(p._id, "rejected")}
+                          className="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition">
+                          Reject
+                        </button>
+                      </>
+                    )}
+                    {p.status === "active" && (
+                      <button onClick={() => updateStatus(p._id, "inactive")}
+                        className="flex-1 py-2 rounded-xl text-xs font-semibold transition"
+                        style={{ background: "var(--bg)", color: "var(--text)", border: "1px solid var(--border)" }}>
+                        Deactivate
                       </button>
-                      <button
-                        onClick={() => handleUpdateStatus(property._id, "rejected")}
-                        className="flex-1 px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700"
-                      >
-                        Reject
+                    )}
+                    {p.status === "inactive" && (
+                      <button onClick={() => updateStatus(p._id, "active")}
+                        className="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition">
+                        Reactivate
                       </button>
-                    </>
-                  )}
-                  {property.status === "active" && (
-                    <button
-                      onClick={() => handleUpdateStatus(property._id, "inactive")}
-                      className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50"
-                    >
-                      Deactivate
+                    )}
+                    <button onClick={() => handleDelete(p._id)}
+                      className="p-2 rounded-xl transition"
+                      style={{ color: "#ef4444", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)" }}>
+                      <Trash2 size={14} />
                     </button>
-                  )}
-                  <button
-                    onClick={() => handleDeleteProperty(property._id)}
-                    className="px-3 py-2 text-red-600 border border-red-300 text-sm rounded hover:bg-red-50"
-                  >
-                    Delete
-                  </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border p-12 text-center">
-          <p className="text-gray-500">No properties found</p>
+        <div className="flex flex-col items-center justify-center py-16 rounded-2xl"
+          style={{ background: "var(--surface)", border: "2px dashed var(--border)" }}>
+          <Home size={32} className="mb-3" style={{ color: "var(--text2)", opacity: 0.3 }} />
+          <p className="text-sm" style={{ color: "var(--text2)" }}>No properties found</p>
         </div>
       )}
     </div>

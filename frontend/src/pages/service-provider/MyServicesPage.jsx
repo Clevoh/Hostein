@@ -3,7 +3,7 @@ import { Plus, Pencil, Trash2, X, Clock, ImageIcon, AlertTriangle } from "lucide
 import CurrencySelector from "../../components/CurrencySelector";
 import { formatPrice, getSavedCurrency, saveCurrency, CURRENCIES } from "../../utils/currency";
 
-const API_URL = "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL;
 
 // The currency your DB stores prices in (change if needed)
 const DB_CURRENCY = "KES";
@@ -144,7 +144,7 @@ export default function MyServicesPage() {
         .ms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 22px; }
 
         .ms-card {
-          background: #fff; border-radius: 18px; border: 1px solid #e8e8e4;
+          background: var(--card-bg); color: var(--text); border-radius: 18px; border: 1px solid var(--card-border);
           overflow: hidden; display: flex; flex-direction: column;
           transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s;
           animation: cardIn 0.45s ease both;
@@ -180,7 +180,7 @@ export default function MyServicesPage() {
         .ms-btn-del { color: #c0392b; border-color: #fac8c5; background: #fff8f8; }
         .ms-btn-del:hover { background: #fff0ef; border-color: #c0392b; }
 
-        .ms-skel { background: #fff; border-radius: 18px; border: 1px solid #e8e8e4; overflow: hidden; }
+        .ms-skel { background: var(--card-bg); border-radius: 18px; border: 1px solid var(--card-border); }
         .ms-shim { background: linear-gradient(90deg,#f2f1ee 25%,#e8e7e3 50%,#f2f1ee 75%); background-size: 300% 100%; animation: shim 1.7s infinite; }
         @keyframes shim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
@@ -192,11 +192,11 @@ export default function MyServicesPage() {
         .ms-overlay { position:fixed; inset:0; background:rgba(8,8,6,0.65); backdrop-filter:blur(10px); z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px; animation:ov 0.18s ease; }
         @keyframes ov { from{opacity:0} to{opacity:1} }
 
-        .ms-modal { background:#fff; border-radius:22px; width:100%; max-width:500px; max-height:92vh; overflow-y:auto; box-shadow:0 40px 100px rgba(0,0,0,0.25); animation:mIn 0.3s cubic-bezier(0.34,1.56,0.64,1); scrollbar-width:none; }
+        .ms-modal { background: var(--card-bg); color: var(--text); }
         .ms-modal::-webkit-scrollbar { display:none; }
         @keyframes mIn { from{opacity:0;transform:translateY(22px) scale(0.96)} to{opacity:1;transform:none} }
 
-        .ms-modal-hdr { padding:28px 28px 22px; display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid #f0f0ec; position:sticky; top:0; background:#fff; z-index:2; }
+        .ms-modal-hdr { background: var(--card-bg); border-bottom:1px solid var(--card-border); }
         .ms-modal-eyebrow { font-size:10px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:#16a34a; margin-bottom:5px; }
         .ms-modal-title { font-family:'Playfair Display',serif; font-size:24px; font-weight:900; color:#0d0d0d; line-height:1.1; }
         .ms-modal-x { width:34px; height:34px; border-radius:50%; background:#f3f2ef; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#555; flex-shrink:0; margin-top:2px; transition:background 0.15s,color 0.15s; }
@@ -205,7 +205,7 @@ export default function MyServicesPage() {
         .ms-form { padding:24px 28px 30px; display:flex; flex-direction:column; gap:20px; }
         .ms-lbl { display:block; font-size:10.5px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:#555; margin-bottom:7px; }
         .ms-inp,.ms-ta,.ms-sel { width:100%; padding:12px 16px; border:1.5px solid #e4e4e0; border-radius:11px; font-size:14.5px; font-family:'Outfit',sans-serif; font-weight:400; color:#111; background:#fafaf8; outline:none; transition:border-color 0.15s,background 0.15s; -webkit-appearance:none; }
-        .ms-inp:focus,.ms-ta:focus,.ms-sel:focus { border-color:#0d0d0d; background:#fff; }
+        .ms-inp:focus,.ms-ta:focus,.ms-sel:focus { border-color: var(--accent); background: var(--surface); }
         .ms-inp::placeholder,.ms-ta::placeholder { color:#c0c0bc; font-weight:300; }
         .ms-ta { resize:vertical; min-height:88px; line-height:1.6; }
         .ms-2col { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
@@ -228,7 +228,7 @@ export default function MyServicesPage() {
         .ms-submit:active:not(:disabled) { transform:scale(0.99); }
         .ms-submit:disabled { opacity:0.45; cursor:not-allowed; }
 
-        .ms-cfm { background:#fff; border-radius:20px; padding:34px; width:100%; max-width:370px; text-align:center; box-shadow:0 28px 70px rgba(0,0,0,0.2); animation:mIn 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+        .ms-cfm { background: var(--card-bg); color: var(--text); }
         .ms-cfm-ico { width:56px; height:56px; background:#fff0ef; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; color:#c0392b; }
         .ms-cfm-h { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; margin-bottom:10px; }
         .ms-cfm-p { color:#999; font-size:14px; font-weight:300; line-height:1.65; margin-bottom:26px; }

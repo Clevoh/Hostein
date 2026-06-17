@@ -2,15 +2,16 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { MapPin, Calendar, Users, Star, Wifi, Home, Bed, Bath, ArrowRight } from "lucide-react";
 import HosteinNavbar from "../../components/HosteinNavbar";
+import StarRating from "../../components/StarRating";
 
 export default function RentalsPage() {
   const [properties, setProperties] = useState([]);
+  const [reviews, setReviews] = useState({});  // Store reviews by propertyId
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Get filters from URL
-  const categoryFilter = searchParams.get("type");   // hostel, apartment, etc.
+  const categoryFilter = searchParams.get("type");
   const cityFilter     = searchParams.get("city");
   const searchQuery    = searchParams.get("q");
 
@@ -21,24 +22,21 @@ export default function RentalsPage() {
   const fetchProperties = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/api/properties");
+      const res = await fetch("${import.meta.env.VITE_API_URL}/api/properties");
       const data = await res.json();
-      
+
       let filtered = data;
 
-      // Filter by category
       if (categoryFilter) {
         filtered = filtered.filter(p => p.category === categoryFilter);
       }
 
-      // Filter by city
       if (cityFilter) {
-        filtered = filtered.filter(p => 
+        filtered = filtered.filter(p =>
           p.city?.toLowerCase().includes(cityFilter.toLowerCase())
         );
       }
 
-      // Search
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         filtered = filtered.filter(p =>
@@ -49,6 +47,11 @@ export default function RentalsPage() {
       }
 
       setProperties(filtered);
+
+      // Fetch reviews for each property
+      filtered.forEach(property => {
+        fetchPropertyReviews(property._id);
+      });
     } catch (error) {
       console.error("Failed to fetch properties:", error);
     } finally {
@@ -56,10 +59,34 @@ export default function RentalsPage() {
     }
   };
 
+  const fetchPropertyReviews = async (propertyId) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/reviews/property/${propertyId}`);
+      const data = await res.json();
+      
+      const reviewList = Array.isArray(data) ? data : data?.reviews || [];
+      const avgRating = data?.averageRating || (
+        reviewList.length > 0
+          ? reviewList.reduce((sum, r) => sum + r.rating, 0) / reviewList.length
+          : 0
+      );
+
+      setReviews(prev => ({
+        ...prev,
+        [propertyId]: {
+          count: reviewList.length,
+          average: avgRating
+        }
+      }));
+    } catch (error) {
+      console.error("Failed to fetch reviews:", error);
+    }
+  };
+
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "https://via.placeholder.com/400x300?text=No+Image";
     if (imagePath.startsWith("http")) return imagePath;
-    return `http://localhost:5000${imagePath}`;
+    return `${import.meta.env.VITE_API_URL}${imagePath}`;
   };
 
   const getCategoryLabel = (cat) => {
@@ -182,92 +209,111 @@ export default function RentalsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {properties.map((property) => (
-              <div
-                key={property._id}
-                onClick={() => handlePropertyClick(property._id)}
-                className="group cursor-pointer"
-              >
-                {/* Image */}
-                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden mb-3">
-                  <img
-                    src={getImageUrl(property.images?.[0])}
-                    alt={property.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/400x300?text=No+Image";
-                    }}
-                  />
-                  
-                  {/* Image counter */}
-                  {property.images && property.images.length > 1 && (
-                    <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-lg">
-                      1/{property.images.length}
+            {properties.map((property) => {
+              const propertyReviews = reviews[property._id] || { count: 0, average: 0 };
+              
+              return (
+                <div
+                  key={property._id}
+                  onClick={() => handlePropertyClick(property._id)}
+                  className="group cursor-pointer"
+                >
+                  {/* Image */}
+                  <div className="relative aspect-[4/3] rounded-2xl overflow-hidden mb-3">
+                    <img
+                      src={getImageUrl(property.images?.[0])}
+                      alt={property.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        e.target.src = "https://via.placeholder.com/400x300?text=No+Image";
+                      }}
+                    />
+
+                    {/* Image counter */}
+                    {property.images && property.images.length > 1 && (
+                      <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-lg">
+                        1/{property.images.length}
+                      </div>
+                    )}
+
+                    {/* Category badge */}
+                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-gray-800">
+                      {getCategoryLabel(property.category)}
                     </div>
-                  )}
-
-                  {/* Category badge */}
-                  <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-gray-800">
-                    {getCategoryLabel(property.category)}
-                  </div>
-                </div>
-
-                {/* Details */}
-                <div className="space-y-1">
-                  {/* Location */}
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <MapPin size={14} />
-                    <span className="font-medium">{property.city}, {property.country}</span>
                   </div>
 
-                  {/* Title */}
-                  <h3 className="font-semibold text-gray-900 truncate">
-                    {property.title}
-                  </h3>
+                  {/* Details */}
+                  <div className="space-y-1">
+                    {/* Location */}
+                    <div className="flex items-center gap-1 text-sm text-gray-600">
+                      <MapPin size={14} />
+                      <span className="font-medium">{property.city}, {property.country}</span>
+                    </div>
 
-                  {/* Amenities (if available) */}
-                  {property.amenities && property.amenities.length > 0 && (
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      {property.amenities.slice(0, 3).map((amenity, i) => (
-                        <span key={i} className="flex items-center gap-1">
-                          {amenity === "WiFi" && <Wifi size={12} />}
-                          {amenity}
+                    {/* Title */}
+                    <h3 className="font-semibold text-gray-900 truncate">
+                      {property.title}
+                    </h3>
+
+                    {/* ⭐ REVIEWS - Shown on card */}
+                    {propertyReviews.count > 0 && (
+                      <div className="flex items-center gap-2">
+                        <StarRating value={propertyReviews.average} readonly size={14} />
+                        <span className="text-xs text-gray-600">
+                          {propertyReviews.average.toFixed(1)} ({propertyReviews.count})
                         </span>
-                      ))}
-                      {property.amenities.length > 3 && (
-                        <span>+{property.amenities.length - 3} more</span>
+                      </div>
+                    )}
+
+                    {/* Amenities */}
+                    {property.amenities && property.amenities.length > 0 && (
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        {property.amenities.slice(0, 3).map((amenity, i) => (
+                          <span key={i} className="flex items-center gap-1">
+                            {amenity === "WiFi" && <Wifi size={12} />}
+                            {amenity}
+                          </span>
+                        ))}
+                        {property.amenities.length > 3 && (
+                          <span>+{property.amenities.length - 3} more</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Price */}
+                    <div className="flex items-baseline gap-1 pt-1">
+                      {property.rentType === "daily" && property.pricePerNight ? (
+                        <>
+                          <span className="text-lg font-bold text-gray-900">
+                            ${property.pricePerNight}
+                          </span>
+                          <span className="text-sm text-gray-600">/ night</span>
+                        </>
+                      ) : (
+                        <span className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                          Monthly Rental
+                        </span>
                       )}
                     </div>
-                  )}
 
-                  {/* Price */}
-                  <div className="flex items-baseline gap-1 pt-1">
-                    {property.rentType === "daily" && property.pricePerNight ? (
-                      <>
-                        <span className="text-lg font-bold text-gray-900">
-                          ${property.pricePerNight}
-                        </span>
-                        <span className="text-sm text-gray-600">/ night</span>
-                      </>
-                    ) : (
-                      <span className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                        Monthly Rental
-                      </span>
-                    )}
+                    <div className="font-semibold">
+                      {property.rentType === "daily"
+                       ? `$${property.pricePerNight} / night`
+                        : "$ Monthly"}
+                    </div>
+
+                    {/* View details link */}
+                    <button className="mt-2 w-full py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 group-hover:gap-3">
+                      View Details
+                      <ArrowRight size={14} />
+                    </button>
                   </div>
-
-                  {/* View details link */}
-                  <button className="mt-2 w-full py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 group-hover:gap-3">
-                    View Details
-                    <ArrowRight size={14} />
-                  </button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
     </div>
   );
 }
- 

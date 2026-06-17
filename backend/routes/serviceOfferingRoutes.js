@@ -1,7 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const { protect } = require("../middleware/authMiddleware");
-
 const {
   getMyOfferings,
   getActiveOfferings,
@@ -11,27 +9,17 @@ const {
   deleteOffering,
 } = require("../controllers/ServiceOfferingController");
 
-/* ============================= */
-/* PUBLIC ROUTES */
-/* ============================= */
+const { protect } = require("../middleware/authMiddleware");
+const upload = require("../middleware/uploadServiceMiddleware");
 
-// Anyone can browse active services
+// Public
 router.get("/active", getActiveOfferings);
-
-// Anyone can view a single offering
 router.get("/:id", getOfferingById);
 
-/* ============================= */
-/* PROTECTED ROUTES */
-/* ============================= */
-
-// Everything below requires login
-router.use(protect);
-
-// Provider manages own offerings
-router.get("/", getMyOfferings);
-router.post("/", createOffering);
-router.put("/:id", updateOffering);
-router.delete("/:id", deleteOffering);
+// Provider
+router.get("/", protect, getMyOfferings);
+router.post("/", protect, upload.single("image"), createOffering);
+router.put("/:id", protect, upload.single("image"), updateOffering);
+router.delete("/:id", protect, deleteOffering);
 
 module.exports = router;

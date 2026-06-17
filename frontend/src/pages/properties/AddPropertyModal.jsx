@@ -3,6 +3,26 @@ import { useState } from "react";
 import { createProperty } from "../../services/propertyService";
 import { useProperties } from "../../context/PropertyContext";
 
+// ─── East Africa Data ──────────────────────────────────────────────────────
+const EAST_AFRICA = {
+  Rwanda:   ["Kigali", "Musanze", "Rubavu", "Huye", "Muhanga", "Nyagatare", "Rusizi"],
+  Kenya:    ["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret", "Thika", "Malindi"],
+  Uganda:   ["Kampala", "Entebbe", "Jinja", "Gulu", "Mbarara", "Mbale", "Fort Portal"],
+  Tanzania: ["Dar es Salaam", "Dodoma", "Arusha", "Mwanza", "Zanzibar", "Morogoro", "Tanga"],
+  Burundi:  ["Bujumbura", "Gitega", "Ngozi", "Rumonge", "Muyinga", "Kayanza", "Bururi"],
+};
+
+const CURRENCY = {
+  Rwanda:   { code: "RWF", symbol: "RWF" },
+  Kenya:    { code: "KES", symbol: "KSh" },
+  Uganda:   { code: "UGX", symbol: "USh" },
+  Tanzania: { code: "TZS", symbol: "TSh" },
+  Burundi:  { code: "BIF", symbol: "BIF" },
+};
+
+const COUNTRIES = Object.keys(EAST_AFRICA);
+// ───────────────────────────────────────────────────────────────────────────
+
 export default function AddPropertyModal({ onClose }) {
   const { addProperty } = useProperties();
   const [loading, setLoading] = useState(false);
@@ -23,6 +43,10 @@ export default function AddPropertyModal({ onClose }) {
     amenities: [],
   });
 
+  // Derived values based on selected country
+  const citySuggestions = EAST_AFRICA[form.country] || [];
+  const currency = CURRENCY[form.country] || { code: "", symbol: "" };
+
   const amenitiesOptions = [
     "WiFi", "Laundry", "Kitchen", "Parking", "Gym",
     "Study Room", "Common Area", "24/7 Security", "Cleaning Service",
@@ -35,6 +59,10 @@ export default function AddPropertyModal({ onClose }) {
         ? prev.amenities.filter((a) => a !== amenity)
         : [...prev.amenities, amenity],
     }));
+  };
+
+  const handleCountryChange = (e) => {
+    setForm((prev) => ({ ...prev, country: e.target.value, city: "" }));
   };
 
   const handleImageChange = (e) => {
@@ -75,15 +103,14 @@ export default function AddPropertyModal({ onClose }) {
       alert("Please fill all required fields");
       return;
     }
-
     try {
       setLoading(true);
-
       const formData = new FormData();
       formData.append("title", form.title);
       formData.append("address", form.address);
       formData.append("city", form.city);
       formData.append("country", form.country);
+      formData.append("currency", currency.code);
       formData.append("category", form.category);
       formData.append("rentType", form.rentType);
       formData.append("description", form.description);
@@ -93,7 +120,6 @@ export default function AddPropertyModal({ onClose }) {
         formData.append("pricePerNight", Number(form.pricePerNight));
       }
 
-      // 🆕 Hostel fields
       if (form.category === "hostel") {
         formData.append("hostelType", form.hostelType);
         if (mealPlans.length > 0) {
@@ -119,6 +145,8 @@ export default function AddPropertyModal({ onClose }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white w-full max-w-2xl rounded-xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+
+        {/* Header */}
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-bold">Add Property</h2>
           <button onClick={onClose}><X /></button>
@@ -126,33 +154,61 @@ export default function AddPropertyModal({ onClose }) {
 
         <input
           className="input"
-          placeholder="Title"
+          placeholder="Title *"
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
         />
 
         <input
           className="input"
-          placeholder="Address"
+          placeholder="Address *"
           value={form.address}
           onChange={(e) => setForm({ ...form, address: e.target.value })}
         />
 
+        {/* ── Country & City ──────────────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-4">
-          <input
-            className="input"
-            placeholder="City"
-            value={form.city}
-            onChange={(e) => setForm({ ...form, city: e.target.value })}
-          />
-          <input
-            className="input"
-            placeholder="Country"
-            value={form.country}
-            onChange={(e) => setForm({ ...form, country: e.target.value })}
-          />
+          {/* Country */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Country *</label>
+            <select className="input" value={form.country} onChange={handleCountryChange}>
+              {COUNTRIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            {/* Currency badge */}
+            <span className="inline-block mt-1 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded px-2 py-0.5">
+              {currency.code} ({currency.symbol})
+            </span>
+          </div>
+
+          {/* City */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">City *</label>
+            <select
+              className="input"
+              value={form.city}
+              onChange={(e) => setForm({ ...form, city: e.target.value })}
+            >
+              <option value="">Select city…</option>
+              {citySuggestions.map((city) => (
+                <option key={city} value={city}>{city}</option>
+              ))}
+              <option value="__other__">Other…</option>
+            </select>
+            {form.city === "__other__" && (
+              <input
+                className="input mt-2"
+                placeholder="Enter city name"
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, city: e.target.value }))
+                }
+              />
+            )}
+          </div>
         </div>
 
+        {/* ── Category & Rent Type ──────────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-4">
           <select
             className="input"
@@ -174,17 +230,28 @@ export default function AddPropertyModal({ onClose }) {
           </select>
         </div>
 
+        {/* ── Price per Night (daily only) ─────────────────────────────────── */}
         {form.rentType === "daily" && (
-          <input
-            className="input"
-            type="number"
-            placeholder="Price per night"
-            value={form.pricePerNight}
-            onChange={(e) => setForm({ ...form, pricePerNight: e.target.value })}
-          />
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              Price per Night ({currency.symbol})
+            </label>
+            <div className="relative flex items-center">
+              <span className="absolute left-3 text-sm font-semibold text-gray-400 select-none pointer-events-none">
+                {currency.symbol}
+              </span>
+              <input
+                className="input pl-14"
+                type="number"
+                placeholder="0"
+                value={form.pricePerNight}
+                onChange={(e) => setForm({ ...form, pricePerNight: e.target.value })}
+              />
+            </div>
+          </div>
         )}
 
-        {/*  HOSTEL SECTION - only shows when Hostel is selected */}
+        {/* ── Hostel Section ────────────────────────────────────────────────── */}
         {form.category === "hostel" && (
           <div className="border border-blue-200 bg-blue-50 rounded-xl p-4 space-y-4">
             <h3 className="font-semibold text-blue-900 flex items-center gap-2">
@@ -206,7 +273,6 @@ export default function AddPropertyModal({ onClose }) {
               </select>
             </div>
 
-            {/* Meal Plans - show for meals_included or mixed */}
             {(form.hostelType === "meals_included" || form.hostelType === "mixed") && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -218,8 +284,7 @@ export default function AddPropertyModal({ onClose }) {
                     onClick={addMealPlan}
                     className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
                   >
-                    <Plus size={16} />
-                    Add Meal Plan
+                    <Plus size={16} /> Add Meal Plan
                   </button>
                 </div>
 
@@ -230,7 +295,10 @@ export default function AddPropertyModal({ onClose }) {
                 )}
 
                 {mealPlans.map((plan, index) => (
-                  <div key={index} className="bg-white rounded-lg p-4 space-y-3 border border-blue-100">
+                  <div
+                    key={index}
+                    className="bg-white rounded-lg p-4 space-y-3 border border-blue-100"
+                  >
                     <div className="flex items-center justify-between">
                       <select
                         className="input text-sm"
@@ -252,26 +320,41 @@ export default function AddPropertyModal({ onClose }) {
                       </button>
                     </div>
 
+                    {/* Meal plan prices with currency */}
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-xs text-gray-500 mb-1 block">Daily Price (RWF)</label>
-                        <input
-                          className="input text-sm"
-                          type="number"
-                          placeholder="e.g. 5000"
-                          value={plan.priceDaily}
-                          onChange={(e) => updateMealPlan(index, "priceDaily", e.target.value)}
-                        />
+                        <label className="text-xs text-gray-500 mb-1 block">
+                          Daily Price ({currency.symbol})
+                        </label>
+                        <div className="relative flex items-center">
+                          <span className="absolute left-3 text-xs font-semibold text-gray-400 select-none pointer-events-none">
+                            {currency.symbol}
+                          </span>
+                          <input
+                            className="input text-sm pl-14"
+                            type="number"
+                            placeholder="0"
+                            value={plan.priceDaily}
+                            onChange={(e) => updateMealPlan(index, "priceDaily", e.target.value)}
+                          />
+                        </div>
                       </div>
                       <div>
-                        <label className="text-xs text-gray-500 mb-1 block">Monthly Price (RWF)</label>
-                        <input
-                          className="input text-sm"
-                          type="number"
-                          placeholder="e.g. 100000"
-                          value={plan.priceMonthly}
-                          onChange={(e) => updateMealPlan(index, "priceMonthly", e.target.value)}
-                        />
+                        <label className="text-xs text-gray-500 mb-1 block">
+                          Monthly Price ({currency.symbol})
+                        </label>
+                        <div className="relative flex items-center">
+                          <span className="absolute left-3 text-xs font-semibold text-gray-400 select-none pointer-events-none">
+                            {currency.symbol}
+                          </span>
+                          <input
+                            className="input text-sm pl-14"
+                            type="number"
+                            placeholder="0"
+                            value={plan.priceMonthly}
+                            onChange={(e) => updateMealPlan(index, "priceMonthly", e.target.value)}
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -298,11 +381,9 @@ export default function AddPropertyModal({ onClose }) {
           </div>
         )}
 
-        {/* Amenities */}
+        {/* ── Amenities ──────────────────────────────────────────────────────── */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Amenities
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Amenities</label>
           <div className="flex flex-wrap gap-2">
             {amenitiesOptions.map((amenity) => (
               <button
@@ -328,12 +409,11 @@ export default function AddPropertyModal({ onClose }) {
           onChange={(e) => setForm({ ...form, description: e.target.value })}
         />
 
-        {/* IMAGE UPLOAD SECTION */}
+        {/* ── Image Upload ────────────────────────────────────────────────────── */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
             Property Images (Max 5)
           </label>
-
           <label className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition">
             <Upload size={20} className="text-gray-500" />
             <span className="text-sm text-gray-600">
